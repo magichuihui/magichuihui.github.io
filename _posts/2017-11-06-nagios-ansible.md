@@ -1,3 +1,9 @@
+---
+layout:post
+title: Nagios + Ansible
+date: 2017-11-06
+---
+
 Ansible部署Nagios监控系统
 =============================================
 
