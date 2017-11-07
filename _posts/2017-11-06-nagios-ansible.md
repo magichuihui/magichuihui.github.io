@@ -15,9 +15,27 @@ Ansible部署Nagios监控系统
 
 * **Nagios**是一款开源的系统和网络监视工具，能有效监控Linux和Windows的主机状态，交换机路由器等网络设置等。并在系统或服务状态异常时发出邮件或短信报警，在状态恢复后发出正常的邮件或短信通知。
 * **Ansible**是自动化运维工具，可以配置系统，部署软件等。它不需要服务器端也不用客户端，这个特性比较重要。
-* **InfluxDB**是一个分布式的时序数据库。
+* **InfluxDB**是一个分布式的时序数据库,提供HTTP API接口跟SQL-like查询。
 * **Grafana**是一个开源的可视化平台，具有功能齐全的度量仪表盘和图形编辑器，有灵活丰富的图形化选项，可以混合多种风格，支持多个数据源。
 * **Slack**团队协作工具，这里用来接受Nagios报警信息。
+
+在此监控系统中，我们使用Nagios来获取监控信息数据，由于rrdtool的历史数据精度不够，采用influxdb来存储数据，然后使用grafana展示数据。Nagios的报警信息发送到slack的频道，slack支持订阅消息。
+
+## Nagios服务
+
+具体安装过程可以参考[官方文档][1]，不再赘述。
+Nagios系统在结构上可分为核心，插件及NRPE扩展3个部分，其中核心部分提供调度任务，在事件发生后发送报警信息等基础功能，而具体地监控某一资源需要安装相应的插件，如check_cpu, check_disk等等（[点此下载](https://www.nagios.org/downloads/nagios-plugins/)）。
+NRPE扩展安装在被监控主机上来收集监控信息，它由两部分组成：安装在Nagios服务器上的check_nrpe插件及运行与被监控主机的NRPE daemon。
+
+当Naigos监控远程主机的资源时，工作流程如下：
+
+* Nagios 会运行 `check_nrpe` 这个插件，并且告诉它需要检查什么（即运行哪个插件）
+* `check_nrpe` 插件会与远程的 NRPE daemon通讯
+* NRPE daemon 会运行相应的 Nagios 插件来执行检查动作
+* NPRE daemon 将检查的结果返回给 check_nrpe 插件，插件将其返回给 Nagios 做处理。
+
+NRPE 结构图:
+![NRPE结构图]('images/nrpe.png')
 
 
 
