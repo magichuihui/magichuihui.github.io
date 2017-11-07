@@ -35,7 +35,8 @@ NRPE扩展安装在被监控主机上来收集监控信息，它由两部分组�
 * NPRE daemon 将检查的结果返回给 check_nrpe 插件，插件将其返回给 Nagios 做处理。
 
 NRPE 结构图:
-![NRPE结构图]('images/nrpe.png')
+
+![NRPE结构图](/images/nrpe.png)
 
 
 
