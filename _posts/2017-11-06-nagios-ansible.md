@@ -42,17 +42,31 @@ NRPE 结构图:
 
 在服务器端需要安装Nagios Core，Plugins以及NRPE，被监控主机也就是客户端需要安装Nagios Plugins跟NRPE。具体安装过程可以参考[官方文档][1]，不再赘述。
 
-默认的源码安装会在 `/usr/local/nagios` 下生成一下目录：
+默认的源码安装会在 `/usr/local/nagios` 下生成以下目录：
 
-目录名称 | 作用
--------- | ----
-bin | Nagios 可执行程序所在目录
-etc | Nagios 配置文件目录
-share | Nagios Web界面存放路径
-libexec | Nagios 外部插件存放目录
-var | Nagios 日志文件、Lock 等文件所在的目录
-var/archives | Nagios 日志自动归档目录
-var/rw | 用来存放外部命令文件的目录
+| 目录名称 | 作用 |
+| -------- | ---- |
+| bin | Nagios 可执行程序所在目录 |
+|etc | Nagios 配置文件目录 |
+| share | Nagios Web界面存放路径 |
+| libexec | Nagios 外部插件存放目录 |
+| var | Nagios 日志文件、Lock 等文件所在的目录 |
+| var/archives | Nagios 日志自动归档目录 |
+| var/rw | 用来存放外部命令文件的目录 |
+
+##### 配置
+
+Nagios的配置文件中几种主要的类型定义：
+
+* `Hosts` 网络上物理设备，包括主机，路由器等
+* `Host Groups` 一组主机，方便管理
+* `Services` 主机的属性（cpu load，uptime等）
+* `Service Groups`
+* `Contacts` 联系人，决定了报警方式，及接受哪些时间的报警
+* `Commands` 检查主机、服务状态，报警，事件处理时执行的程序或脚本
+
+
+
 
 
 
