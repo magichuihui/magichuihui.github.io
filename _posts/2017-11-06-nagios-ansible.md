@@ -45,6 +45,7 @@ NRPE 结构图:
 默认的源码安装会在 `/usr/local/nagios` 下生成一下目录：
 
 | 目录名称 | 作用 |
+| -------- | :--: |
 | bin | Nagios 可执行程序所在目录 |
 | etc | Nagios 配置文件目录 |
 | share | Nagios Web界面存放路径 |
