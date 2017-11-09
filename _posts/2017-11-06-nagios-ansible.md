@@ -121,3 +121,4 @@ sudo service influxdb start
 [3]: https://docs.influxdata.com/influxdb/v1.3/introduction/getting_started/
 [4]: http://docs.grafana.org/installation/rpm/
 [5]: https://slack.com/apps/A0F81R747-nagios
+[6]: https://github.com/Griesbacher/nagflux
