@@ -104,16 +104,56 @@ sudo service influxdb start
 
 上面我们将性能数据通过rrdtool存储为硬盘文件，可以通过 [nagflux][6] 把数据自动导入到InfluxDB。
 
+nagflux也是用go语言编写的不需要其他依赖，安装简单。修改配置文件 `config.gcfg`，启动程序就可以在InfluxDB中看到数据了。
+
+### Grafana
+
+#### 安装
+
+使用 yum 直接安装 `Grafana`：
+
+```bash
+sudo yum install https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-4.6.1-1.x86_64.rpm
+sudo systemctl start grafana
+```
+
+打开 `Grafana` 的web界面，http://127.0.0.1:3000。在菜单中找到添加数据源，添加类型为 `InfluxDB` 名为 nagflux 的数据源。
+
+至此我们可以在 grafana 的web界面自定义展示数据的图表，也可以使用 [histou][7] 插件，`histou` 提供了一个模版可以直接展示 `nagflux` 收集的历史数据为曲线图。
+
+#### 集成到Nagios
+
+将曲线图集成到Nagios，需要在配置文件中的 `Host`，`Service`项增加 `action_url`
+
+```
+define host {
+    name grafana-host 
+    action_url http://grafana-server:3000/dashboard/script/histou.js?host=db5&srv=_HOST_
+    register 0
+}
+define service {
+    name grafana-service
+    action_url http://grafana-server:3000/dashboard/script/histou.js?host=$HOSTNAME$&service=$SERVICEDESC$
+    register 0
+}
+```
+
+这里提供的示例定义了 host 跟 service 的模版，可以被其他的hosts，services继承
+
+### Slack
+
+我们把Nagios的报警信息发送到 [Slack][5] 中的特定频道，通知相关人员
 
 
-
-## 文档
+## 相关文档
 
 * [Nagios][1]
 * [Ansible][2]
 * [InfluxDB][3]
 * [Grafana][4]
 * [Slack][5]
+* [naglux][6]
+* [histou][7]
 
 
 [1]: https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/4/en/quickstart.html#_ga=2.92539934.2061844877.1509670667-1605740700.1509670667
@@ -122,3 +162,4 @@ sudo service influxdb start
 [4]: http://docs.grafana.org/installation/rpm/
 [5]: https://slack.com/apps/A0F81R747-nagios
 [6]: https://github.com/Griesbacher/nagflux
+[7]: https://github.com/Griesbacher/histou
