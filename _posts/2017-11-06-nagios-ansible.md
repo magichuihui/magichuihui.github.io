@@ -68,13 +68,41 @@ NRPE 结构图:
 
 在客户端的 `nrpe.cfg` 增加相应nrpe命令后，启动服务器与客户端相应程序以后，Nagios的基础功能就可以使用了。
 
-#### 安装`PNP4Nagios`
+#### 安装 `PNP4Nagios`
 
 PNP是一款Nagios性能分析插件，它把数据存储在rrdtool。我们在这里只用它来暂存数据。
 
 ### InfluxDB
 
+#### 安装
 
+InfluxDB使用主机上的时间作为存储数据的时间戳，所以我们先安装 `NTP` 来校对时间。
+
+添加InfluxDB的安装源：
+
+```bash
+cat <<EOF | sudo tee /etc/yum.repos.d/influxdb.repo
+[influxdb]
+name = InfluxDB Repository - RHEL \$releasever
+baseurl = https://repos.influxdata.com/rhel/\$releasever/\$basearch/stable
+enabled = 1
+gpgcheck = 1
+gpgkey = https://repos.influxdata.com/influxdb.key
+EOF
+```
+
+安装源设置完成就可以安装并启动influxdb
+
+```bash
+sudo yum install influxdb
+sudo service influxdb start
+```
+
+成功启动后可以打开 web 管理界面 http://127.0.0.1:8083/， 默认用户名和密码是 root 和 root。 InfluxDB 的 web 管理界面端口是 8083，HTTP API 监听端口是 8086，如果需要更改这些默认设定，修改 InfluxDB 的配置文件 `/etc/influxdb/influxdb.conf` 后重启 InfluxDB 就可以了。
+
+#### 迁移数据
+
+上面我们将性能数据通过rrdtool存储为硬盘文件，可以通过 [nagflux][6] 把数据自动导入到InfluxDB。
 
 
 
