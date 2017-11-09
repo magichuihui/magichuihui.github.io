@@ -23,7 +23,6 @@ Ansible部署Nagios监控系统
 
 ## Nagios服务
 
-具体安装过程可以参考[官方文档][1]，不再赘述。
 Nagios系统在结构上可分为核心，插件及NRPE扩展3个部分，其中核心部分提供调度任务，在事件发生后发送报警信息等基础功能，而具体地监控某一资源需要安装相应的插件，如check_cpu, check_disk等等（[点此下载](https://www.nagios.org/downloads/nagios-plugins/)）。
 NRPE扩展安装在被监控主机上来收集监控信息，它由两部分组成：安装在Nagios服务器上的check_nrpe插件及运行与被监控主机的NRPE daemon。
 
@@ -117,7 +116,7 @@ sudo yum install https://s3-us-west-2.amazonaws.com/grafana-releases/release/gra
 sudo systemctl start grafana
 ```
 
-打开 `Grafana` 的web界面，http://127.0.0.1:3000。在菜单中找到添加数据源，添加类型为 `InfluxDB` 名为 nagflux 的数据源。
+打开 `Grafana` 的web界面，`http://127.0.0.1:3000`。在菜单中找到添加数据源，添加类型为 `InfluxDB` 名为 nagflux 的数据源。
 
 至此我们可以在 grafana 的web界面自定义展示数据的图表，也可以使用 [histou][7] 插件，`histou` 提供了一个模版可以直接展示 `nagflux` 收集的历史数据为曲线图。
 
