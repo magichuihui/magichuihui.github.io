@@ -19,7 +19,7 @@ CentOS6.5部署VPN管理系统
 
 ## 二、安装配置Strongswan + letsencrypt
 
-按转Strongswan并使用letsencrypt提供的免费证书
+安装Strongswan并使用letsencrypt提供的免费证书
 
 ### 1. 安装相关依赖
 
@@ -95,7 +95,7 @@ echo "0 0,12 * * * root python -c 'import random; import time;
     >> /etc/crontab
 ```
 
-### 5. 为strongswan配置证书
+### 5. 为strongswan准备证书
 
 ```bash
 ln -s /etc/letsencrypt/live/vpn.baiyang.com/fullchain.pem /etc/strongswan/ipsec.d/certs/
@@ -103,8 +103,246 @@ ln -s /etc/letsencrypt/live/vpn.baiyang.com/privkey.pem /etc/strongswan/ipsec.d/
 ln -s /etc/letsencrypt/live/vpn.baiyang.com/chain.pem /etc/strongswan/ipsec.d/cacerts/
 
 # 我们还需要提供let's encrypt 的中级证书
-wget https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem -O \
+wget https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem.txt -O \
 /etc/strongswan/ipsec.d/cacerts/lets-encrypt-x3-cross-signed.pem
 ```
 
+### 6. 配置stongswan
+
+a. 修改/etc/strongswan/ipsec.conf
+
+```conf
+# ipsec.conf - strongSwan IPsec configuration file
+# basic configuration
+
+config setup
+    # strictcrlpolicy=yes
+    # uniqueids = no
+    charondebug = ike 4, cfg 3, esp 2
+
+conn ikev2
+    auto=add
+    dpdaction=clear
+    dpddelay=60s
+    rekey=no
+    fragmentation=yes
+    keyexchange=ikev2
+
+    # left - server configuration
+    left=%any
+    #ike=aes256-sha1-modp1024,aes128-sha1-modp1024,3des-sha1-modp1024!
+    #esp=aes256-sha256,aes256-sha1,3des-sha1!
+    ike=aes128-sha256-ecp256,aes256-sha384-ecp384,aes128-sha256-modp2048, \
+    aes128-sha1-modp2048,aes256-sha384-modp4096,aes256-sha256-modp4096, \
+    aes256-sha1-modp4096,aes128-sha256-modp1536,aes128-sha1-modp1536, \
+    aes256-sha384-modp2048,aes256-sha256-modp2048,aes256-sha1-modp2048, \
+    aes128-sha256-modp1024,aes128-sha1-modp1024,aes256-sha384-modp1536, \
+    aes256-sha256-modp1536,aes256-sha1-modp1536,aes256-sha384-modp1024, \
+    aes256-sha256-modp1024,aes256-sha1-modp1024!
+    esp=aes128gcm16-ecp256,aes256gcm16-ecp384,aes128-sha256-ecp256,\
+    aes256-sha384-ecp384,aes128-sha256-modp2048,aes128-sha1-modp2048,\
+    aes256-sha384-modp4096,aes256-sha256-modp4096,aes256-sha1-modp4096, \
+    aes128-sha256-modp1536,aes128-sha1-modp1536,aes256-sha384-modp2048, \
+    aes256-sha256-modp2048,aes256-sha1-modp2048,aes128-sha256-modp1024, \
+    aes128-sha1-modp1024,aes256-sha384-modp1536,aes256-sha256-modp1536, \
+    aes256-sha1-modp1536,aes256-sha384-modp1024,aes256-sha256-modp1024, \
+    aes256-sha1-modp1024,aes128gcm16,aes256gcm16,aes128-sha256,aes128-sha1, \
+    aes256-sha384,aes256-sha256,aes256-sha1!
+    leftsendcert=always
+    leftcert=fullchain.pem
+    leftid=@vpn.baiyang.com
+    leftsubnet=%dynamic,10.0.0.0/8
+    leftauth=pubkey
+    lefthostaccess=yes
+    leftfirewall=yes
+    # right - client confguration
+    rightsourceip=%dynamic,10.0.11.0/24
+    rightauth=eap-mschapv2
+    rightsendcert=never
+    eap_identity=%any
+```
+
+b. 修改/etc/strongswan/ipsec.secrets
+
+```bash
+# ipsec.secrets - strongSwan IPsec secrets file
+
+vpn.baiyang.com : RSA privkey.pem
+test : EAP "password"
+```
+
+### 7. 配置网络转发
+
+a. 设置ip_forward
+
+```bash
+# vim /etc/sysctl.conf
+
+net.ipv4.ip_forward = 0
+改为==>
+net.ipv4.ip_forward = 1
+
+sysctl -p
+```
+
+b. 设置iptables
+
+```bash
+iptables -t nat -A POSTROUTING -s 10.0.0.0/16 -d 10.0.0.0/8 -j MASQUERADE 
+iptables -t nat -A POSTROUTING -s 10.0.0.0/8 -d 10.0.0.0/16 -j MASQUERADE 
+
+iptables -A FORWARD -s 10.0.0.0/16 -d 10.0.0.0/8 -i eth0 -m policy --dir in --pol ipsec --reqid 1 --proto esp -j ACCEPT 
+iptables -A FORWARD -s 10.0.0.0/8 -d 10.0.0.0/16 -o eth0 -m policy --dir out --pol ipsec --reqid 1 --proto esp -j ACCEPT 
+```
+
+重启ipsec `ipsec restart`，然后可以连接客户端进行测试了
+
+
+## 三、部署freeradius + MySQL + daloradius
+
+### 1. 安装freeradius
+
+```bash
+yum -y install freeradius freeradius-mysql freeradius-utils
+```
+
+### 2. 为raidus建立数据库
+
+```mysql
+CREATE DATABASE radius;
+GRANT ALL PRIVILEGES ON radius.* TO 'radius'@'localhost' IDENTIFIED BY "password";
+FLUSH privileges;
+USE radius;
+SOURCE /etc/raddb/sql/mysql/schema.sql;
+SOURCE /etc/raddb/sql/mysql/cui.sql;
+SOURCE /etc/raddb/sql/mysql/ippool.sql;
+SOURCE /etc/raddb/sql/mysql/nas.sql;
+SOURCE /etc/raddb/sql/mysql/wimax.sql;
+```
+
+### 3. 配置freeradius连接数据库
+
+```bash
+# vim /etc/raddb/sql.conf
+
+    # Connection info:
+    server = "127.0.0.1"
+    port = 3306
+    login = "radius"
+    password = "password"
+```
+
+### 4. 配置freeradius使用sql来读取客户信息
+
+```bash
+# 启用模块
+# vim /etc/raddb/radiusd.conf
+
+# 去掉以下行前的#
+    $INCLUDE sql.conf
+    $INCLUDE sqlippool.conf
+```
+
+```bash
+# vim /etc/raddb/sites-available/default
+
+# 需要修改的行数及修改后的结果：例：# 001 content
+# 170    #files
+# 177    sql
+# 396    #radutmp
+# 397    sradutmp
+# 406    sql
+# 450    #radutmp
+# 454    sql
+# 475    sql
+# 577    sql
+```
+
+```bash
+# vim /etc/raddb/sites-available/inner-tunnel
+
+# 125    #file
+# 132    sql
+# 252    #radutmp
+# 256    sql
+# 278    sql
+# 302    sql
+```
+
+修改秘钥
+
+```bash
+# vim /etc/raddb/clients.conf
+
+secret = thissecretisverysecret
+```
+
+### 5. 添加测试用户
+
+```bash
+# mysql -uroot -p
+mysql> use radius;
+mysql> insert into radcheck (username,attribute,op,value) \
+values ('test','User-Password',':=','test');
+```
+
+然后以debug模式启动radius
+
+```bash
+radiusd -X
+```
+
+在另外的窗口测试：
+
+```bash
+# radtest test test 127.0.0.1 0 tencentvpn
+
+Sending Access-Request of id 113 to 127.0.0.1 port 1812
+    User-Name = "test"
+    User-Password = "test"
+    NAS-IP-Address = 127.0.0.1
+    NAS-Port = 0
+    Message-Authenticator = 0x00000000000000000000000000000000
+rad_recv: Access-Accept packet from host 127.0.0.1 port 1812, id=113, length=26
+```
+
+## 四、Strongswan和Freeradius整合
+
+### 1. 修改/etc/strongswan/strongswan.d/charon/eap-radius.conf
+
+```bash
+# vim /etc/strongswan/strongswan.d/charon/eap-radius.conf
+
+# 开启在线人数查询
+accounting = yes
+
+accounting_close_on_timeout = yes
+
+# 在 servers {} 中添加radius server
+
+servers {
+    primary {
+        secret = thissecretisverysecret
+        address = 127.0.0.1
+    }
+}
+```
+
+### 2. 修改/etc/strongswan/ipsec.conf
+
+```bash
+# vim /etc/strongswan/ipsec.conf
+
+# 启用radius认证及分配IP
+rightsourceip=%radius
+rightauth=eap-radius
+```
+
+### 3. 重启服务
+
+```bash
+# service radiusd restart
+# ipsec stop
+# ipsec start --nofork
+```
 
