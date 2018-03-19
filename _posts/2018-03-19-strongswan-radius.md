@@ -62,7 +62,7 @@ make && make install
 
 ### 4. 配置 Let's encrypt
 
-使用certbot来安装letsencrypt证书，因为CentOS6没有certbot包，所以我们下载安装 certbot-auto 脚本
+这里我们使用certbot来安装letsencrypt证书，因为CentOS6没有certbot包，所以需要下载安装 certbot-auto 脚本
 
 ```bash
 wget  https://dl.eff.org/certbot-auto
