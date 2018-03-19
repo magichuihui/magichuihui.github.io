@@ -60,9 +60,9 @@ PYTHON=/usr/local/bin/python2.7 ./configure --prefix=/usr --sysconfdir=/etc/stro
 make && make install
 ```
 
-### 4. 配置letsencrypt
+### 4. 配置 Let's encrypt
 
-使用certbot来安装letsencrypt证书，因为CentOS6没有certbot包，所以我们要去下载安装certbot-auto 脚本
+使用certbot来安装letsencrypt证书，因为CentOS6没有certbot包，所以我们下载安装 certbot-auto 脚本
 
 ```bash
 wget  https://dl.eff.org/certbot-auto
