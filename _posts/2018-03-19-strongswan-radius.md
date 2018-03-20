@@ -348,7 +348,136 @@ rightauth=eap-radius
 
 ## 五、设置Daloradius管理用户，以及计费策略等
 
-请参考daloradius的[GitHub](https://github.com/lirantal/daloradius)
+安装过程请参考daloradius的[GitHub](https://github.com/lirantal/daloradius)
+
+### 1. 限制用户每天的登陆时间
+
+```bash
+vim /etc/raddb/radiusd.conf
+    #将747行取消注释
+    $INCLUDE sql/mysql/counter.conf
+```
+
+```bash
+vim /etc/raddb/sql/mysql/counter.conf
+
+# 把60-63行的sql语句注释并添加
+#   query = "SELECT SUM(acctsessiontime - \
+#                 GREATEST((%b - UNIX_TIMESTAMP(acctstarttime)), 0)) \
+#                 FROM radacct WHERE username = '%{%k}' AND \
+#                 UNIX_TIMESTAMP(acctstarttime) + acctsessiontime > '%b'"
+    query = "SELECT IFNULL(SUM(acctsessiontime - \
+                  GREATEST((%b - UNIX_TIMESTAMP(acctstarttime)), 0)),0) \
+                  FROM radacct WHERE username = '%{%k}' AND \
+                  UNIX_TIMESTAMP(acctstarttime) + acctsessiontime > '%b'"
+```
+
+```
+vim /etc/raddb/sites-available/default
+
+authorize {
+    ...
+    # 注释掉192行
+    # daily
+    # 在下面添加
+    dailycounter
+    # 在462行左右的 post-auth 节内添加
+    post-auth {
+        if(control:Auth-Type =~ /.*AP/){
+            update reply {
+                Reply-Message := "Hello %{User-Name} !"
+                Reply-Message := "Regexp match for %{0}"
+            }
+        }
+    }
+}
+```
+
+```
+vim /etc/raddb/dictionary
+
+# 添加以下属性
+ATTRIBUTE   Daily-Session-Time      3000    integer
+ATTRIBUTE   Max-Daily-Session       3001    integer
+```
+
+在mysql中创建相应的策略
+
+```
+mysql -uradius -p
+
+mysql> USE radius;
+mysql> TRUNCATE TABLE radacct;
+mysql> INSERT INTO radgroupcheck (groupname , attribute , op , value ) \
+VALUES ('user', 'Max-Daily-Session', ':=', '43200'); # 43200 seconds is 12h
+mysql> INSERT INTO radgroupcheck (groupname , attribute , op , value ) \
+VALUES ('user', 'Login-Time', ':=', 'Al0001-2359');
+```
+
+### 2. 限制用每天、每月的流量
+
+```
+# vim /etc/raddb/sql/mysql/counter.conf
+    
+#在最后添加以下：
+sqlcounter dailytrafficcounter {
+    counter-name = Daily-Traffic
+    check-name = Max-Daily-Traffic
+    reply-name = Daily-Traffic-Limit
+    sqlmod-inst = sql
+    key = User-Name
+    reset = daily
+    query = "SELECT (SUM(AcctInputOctets + AcctOutputOctets)) FROM radacct WHERE UserName='%{%k}' AND UNIX_TIMESTAMP(AcctStartTime) > '%b'"
+}
+
+sqlcounter monthlytrafficcounter {
+    counter-name = Monthly-Traffic
+    check-name = Max-Monthly-Traffic
+    reply-name = Monthly-Traffic-Limit
+    sqlmod-inst = sql
+    key = User-Name
+    reset = monthly
+    query = "SELECT (SUM(AcctInputOctets + AcctOutputOctets)) FROM radacct WHERE UserName='%{%k}' AND UNIX_TIMESTAMP(AcctStartTime) > '%b'"
+}
+```
+
+```
+# vim /etc/raddb/dictionary
+
+# 添加
+ATTRIBUTE   Max-Daily-Traffic       3002    integer
+ATTRIBUTE   Daily-Traffic-Limit     3003    integer
+ATTRIBUTE   Max-Monthly-Traffic     3004    integer
+ATTRIBUTE   Monthly-Traffic-Limit   3005    integer
+```
+
+```
+# vi /etc/raddb/sites-available/default
+
+# 在193行下面添加
+dailytrafficcounter
+monthlytrafficcounter
+```
+
+在MySQL中添加相关策略
+
+```
+# mysql -uroot -p
+
+mysql> USE radius;
+mysql> TRUNCATE TABLE radacct;
+mysql> INSERT INTO radgroupcheck (groupname , attribute , op , value ) \
+VALUES ('user', 'Max-Monthly-Traffic', ':=', '10737418240'); 
+# 10737418240 bytes = 10*1024*1024*1024 bytes=10 Gbyte, 
+# 填写时以byte为单位 每月最大流量10G
+mysql> INSERT INTO radgroupcheck (groupname , attribute , op , value ) \
+VALUES ('user', 'Max-Daily-Traffic', ':=', '1073741824'); 
+# 1073741824 bytes=1024*1024*1024 = 1 Gbyte 每天最大流量为1G
+
+# service radiusd restart
+```
+
+至此，基于radius验证的，使用 Let's Encrypt 作为证书的 VPN 已经部署完毕
 
 
 ## 六、Centos 7 上客户端的设置
