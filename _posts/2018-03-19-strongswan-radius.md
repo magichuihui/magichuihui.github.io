@@ -93,6 +93,10 @@ certbot-auto certonly --webroot -w /var/www/vpn -d vpn.baiyangwang.com
 echo "0 0,12 * * * root python -c 'import random; import time; 
     time.sleep(random.random() * 3600)' && /usr/bin/certbot-auto renew" \
     >> /etc/crontab
+
+# 证书更新以后需要重启strongswan，在strongswan 的deploy hook中加上相应脚本
+echo -e '#!/bin/bash\nipsec status' >> /etc/letsencrypt/renewal-hooks/deploy/strongswan.sh
+chomd a+x /etc/letsencrypt/renewal-hooks/deploy/strongswan.sh
 ```
 
 ### 5. 为strongswan准备证书
