@@ -424,6 +424,7 @@ VALUES ('user', 'Login-Time', ':=', 'Al0001-2359');
 # vim /etc/raddb/sql/mysql/counter.conf
     
 #在最后添加以下：
+{% raw %}
 sqlcounter dailytrafficcounter {
     counter-name = Daily-Traffic
     check-name = Max-Daily-Traffic
@@ -443,6 +444,8 @@ sqlcounter monthlytrafficcounter {
     reset = monthly
     query = "SELECT (SUM(AcctInputOctets + AcctOutputOctets)) FROM radacct WHERE UserName='%{%k}' AND UNIX_TIMESTAMP(AcctStartTime) > '%b'"
 }
+
+{% endraw %}
 ```
 
 ```
