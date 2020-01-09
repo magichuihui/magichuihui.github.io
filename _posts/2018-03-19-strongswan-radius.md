@@ -10,7 +10,7 @@ CentOS6.5部署VPN管理系统
 ## 一、环境及使用的软件介绍
 
 * OS: CentOS release 6.5 (Final)
-* domain: vpn.baiyang.com（请自行替换）
+* domain: vpn.example.com（请自行替换）
 * Strongswan: strongswan-5.6.2
 * freeradius: freeradius-2.2.6
 * MySQL: MySQL5.6
@@ -70,13 +70,13 @@ chmod a+x certbot-auto
 mv certbot-auto /usr/bin/
 ```
 
-在nginx上建一个域名为vpn.baiyang.com的站点，重启nginx使之生效
+在nginx上建一个域名为vpn.example.com的站点，重启nginx使之生效
 
 ```nginx
 # vpn.conf
 server {
     listen 80;
-    server_name vpn.baiyang.com;
+    server_name vpn.example.com;
     
     # 此目录需要与 certbot 命令的参数一致
     location / {
@@ -87,7 +87,7 @@ server {
 certbot-auto 更新证书
 
 ```bash
-certbot-auto certonly --webroot -w /var/www/vpn -d vpn.baiyangwang.com
+certbot-auto certonly --webroot -w /var/www/vpn -d vpn.example.com
 
 # certbot 自动更新证书
 echo "0 0,12 * * * root python -c 'import random; import time; 
@@ -102,9 +102,9 @@ chomd a+x /etc/letsencrypt/renewal-hooks/deploy/strongswan.sh
 ### 5. 为strongswan准备证书
 
 ```bash
-ln -s /etc/letsencrypt/live/vpn.baiyang.com/fullchain.pem /etc/strongswan/ipsec.d/certs/
-ln -s /etc/letsencrypt/live/vpn.baiyang.com/privkey.pem /etc/strongswan/ipsec.d/private/
-ln -s /etc/letsencrypt/live/vpn.baiyang.com/chain.pem /etc/strongswan/ipsec.d/cacerts/
+ln -s /etc/letsencrypt/live/vpn.example.com/fullchain.pem /etc/strongswan/ipsec.d/certs/
+ln -s /etc/letsencrypt/live/vpn.example.com/privkey.pem /etc/strongswan/ipsec.d/private/
+ln -s /etc/letsencrypt/live/vpn.example.com/chain.pem /etc/strongswan/ipsec.d/cacerts/
 
 # 我们还需要提供let's encrypt 的中级证书
 wget https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem.txt -O \
@@ -154,7 +154,7 @@ conn ikev2
     aes256-sha384,aes256-sha256,aes256-sha1!
     leftsendcert=always
     leftcert=fullchain.pem
-    leftid=@vpn.baiyang.com
+    leftid=@vpn.example.com
     leftsubnet=%dynamic,10.0.0.0/8
     leftauth=pubkey
     lefthostaccess=yes
@@ -171,7 +171,7 @@ b. 修改/etc/strongswan/ipsec.secrets
 ```bash
 # ipsec.secrets - strongSwan IPsec secrets file
 
-vpn.baiyang.com : RSA privkey.pem
+vpn.example.com : RSA privkey.pem
 test : EAP "password"
 ```
 
@@ -506,8 +506,8 @@ conn ikev2
     keyexchange=ikev2
     ike=aes256-sha1-modp1024!
     esp=aes256-sha1!
-    right=vpn.baiyang.com
-    rightid=vpn.baiyang.com
+    right=vpn.example.com
+    rightid=vpn.example.com
     rightsubnet=10.0.0.0/8
     rightauth=pubkey
 
