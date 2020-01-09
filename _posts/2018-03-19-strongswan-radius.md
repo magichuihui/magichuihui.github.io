@@ -368,11 +368,11 @@ vim /etc/raddb/sql/mysql/counter.conf
 # 把60-63行的sql语句注释并添加
 #   query = "SELECT SUM(acctsessiontime - \
 #                 GREATEST((%b - UNIX_TIMESTAMP(acctstarttime)), 0)) \
-#                 FROM radacct WHERE username = '%{%k}' AND \
+#                 FROM radacct WHERE username = '%{{ {% }}k}' AND \
 #                 UNIX_TIMESTAMP(acctstarttime) + acctsessiontime > '%b'"
     query = "SELECT IFNULL(SUM(acctsessiontime - \
                   GREATEST((%b - UNIX_TIMESTAMP(acctstarttime)), 0)),0) \
-                  FROM radacct WHERE username = '%{%k}' AND \
+                  FROM radacct WHERE username = '%{{ {% }}k}' AND \
                   UNIX_TIMESTAMP(acctstarttime) + acctsessiontime > '%b'"
 ```
 
