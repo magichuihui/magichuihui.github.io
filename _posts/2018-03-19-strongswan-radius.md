@@ -431,7 +431,7 @@ sqlcounter dailytrafficcounter {
     sqlmod-inst = sql
     key = User-Name
     reset = daily
-    query = "SELECT (SUM(AcctInputOctets + AcctOutputOctets)) FROM radacct WHERE UserName='%{{ {% }}k}' AND UNIX_TIMESTAMP(AcctStartTime) > '%b'"
+    query = "SELECT (SUM(AcctInputOctets + AcctOutputOctets)) FROM radacct WHERE UserName='%{{ "{%" }}k}' AND UNIX_TIMESTAMP(AcctStartTime) > '%b'"
 }
 
 sqlcounter monthlytrafficcounter {
@@ -441,7 +441,7 @@ sqlcounter monthlytrafficcounter {
     sqlmod-inst = sql
     key = User-Name
     reset = monthly
-    query = "SELECT (SUM(AcctInputOctets + AcctOutputOctets)) FROM radacct WHERE UserName='%{{ {% }}k}' AND UNIX_TIMESTAMP(AcctStartTime) > '%b'"
+    query = "SELECT (SUM(AcctInputOctets + AcctOutputOctets)) FROM radacct WHERE UserName='%{{ "{%" }}k}' AND UNIX_TIMESTAMP(AcctStartTime) > '%b'"
 }
 
 ```
