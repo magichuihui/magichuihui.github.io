@@ -74,7 +74,7 @@ PNP是一款Nagios性能分析插件，它把数据存储在rrdtool。我们在�
 
 InfluxDB使用主机上的时间作为存储数据的时间戳，所以我们先安装 `NTP` 来校对时间。
 
-添加InfluxDB的安装源：
+然后安装influxDB，添加InfluxDB的安装源：
 
 ```bash
 cat <<EOF | sudo tee /etc/yum.repos.d/influxdb.repo
