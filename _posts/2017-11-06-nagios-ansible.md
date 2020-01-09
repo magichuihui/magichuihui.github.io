@@ -2,6 +2,8 @@
 layout: post
 title: Ansible部署Nagios监控系统
 date: 2017-11-06
+tags: [linux, monitor]
+comments: true
 ---
 
 ## 我们要实现的
