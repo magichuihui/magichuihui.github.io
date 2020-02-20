@@ -46,17 +46,17 @@ $ sudo lsmod | grep wireguard
 
 1. 生成Wireguard密钥
 
-```bash
-umask 077
-mkdir -p /etc/wireguard/ssl && cd /etc/wireguard/ssl
-wg genkey | tee privatekey | wg pubkey > publickey
-# 下面需要使用这里生成的密钥
-cat privatekey publickey
-cd ..
+    ```bash
+    umask 077
+    mkdir -p /etc/wireguard/ssl && cd /etc/wireguard/ssl
+    wg genkey | tee privatekey | wg pubkey > publickey
+    # 下面需要使用这里生成的密钥
+    cat privatekey publickey
+    cd ..
 
-```
+    ```
 
-2. 创建配置文件 `/etc/wireguard/wg0.conf`，内容如下所示。用刚刚生成的私钥替换 <Private Key>，IP地址可以按需更换。
+2. 创建配置文件 `/etc/wireguard/wg0.conf`，内容如下所示。用刚刚生成的私钥替换`<Private Key>`，IP地址可以按需更换。
 
 
 ```conf
@@ -122,7 +122,7 @@ wg0: flags=209<UP,POINTOPOINT,RUNNING,NOARP>  mtu 1420
 
 ## OpenWrt上安装
 
-1. 首先可以将opkg源替换为国内源`mirrors.ustc.edu.cn/lede/`
+1.首先可以将opkg源替换为国内源`mirrors.ustc.edu.cn/lede/`
 
 ```bash
 opkg update
@@ -133,7 +133,7 @@ reboot
 ```
 
 
-2. 生成Wireguard密钥， 跟服务器上操作一样
+2.生成Wireguard密钥， 跟服务器上操作一样
 
 ```bash
 umask 077
@@ -145,8 +145,9 @@ cd ..
 
 ```
 
-3. 设置Wireguard接口
+3.设置Wireguard接口
 
+```
 * 登录LuCI，打开 `Netowrk>Interfaces>Add new interface`
 * 将新接口的名字也设置为wg0
 * 协议选择 `WireGuard VPN`, 确认
@@ -154,6 +155,7 @@ cd ..
 * 在`IP Addresses`栏添加 `10.14.0.2/24`
 * 在`Firewall Settings`里把新接口wg0添加到`lan Zone`
 * 保存并应用
+```
 
 ## 连接OpenWrt与服务器
 
@@ -194,8 +196,8 @@ service network restart
 
 LuCI中打开`Network>Firewall>NAT Rules>Add`，添加如下设置
 
-> Destination address: 10.104.0.0/16
-> Action: MASQUERADE
-> Outbound device: wg0
+> Destination address: 10.104.0.0/16  
+> Action: MASQUERADE  
+> Outbound device: wg0  
 
 保存并应用，然后在电脑试试吧
