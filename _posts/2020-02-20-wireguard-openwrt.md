@@ -138,15 +138,13 @@ cd ..
 
 3. 设置Wireguard接口
 
-    ```
-* 登录LuCI，打开 `Netowrk>Interfaces>Add new interface`
-* 将新接口的名字也设置为wg0
-* 协议选择 `WireGuard VPN`, 确认
-* 复制上面生成privatekey到`Private Key`栏
-* 在`IP Addresses`栏添加 `10.14.0.2/24`
-* 在`Firewall Settings`里把新接口wg0添加到`lan Zone`
-* 保存并应用
-    ```
+    * 登录LuCI，打开 `Netowrk>Interfaces>Add new interface`
+    * 将新接口的名字也设置为wg0
+    * 协议选择 `WireGuard VPN`, 确认
+    * 复制上面生成privatekey到`Private Key`栏
+    * 在`IP Addresses`栏添加 `10.14.0.2/24`
+    * 在`Firewall Settings`里把新接口wg0添加到`lan Zone`
+    * 保存并应用
 
 ## 连接OpenWrt与服务器
 
