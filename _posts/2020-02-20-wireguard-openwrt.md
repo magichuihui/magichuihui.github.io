@@ -43,7 +43,7 @@ $ sudo lsmod | grep wireguard
 
 1. 生成Wireguard密钥  
 
-```bash
+    ```bash
 umask 077
 mkdir -p /etc/wireguard/ssl && cd /etc/wireguard/ssl
 wg genkey | tee privatekey | wg pubkey > publickey
@@ -54,7 +54,7 @@ cd ..
 
 2. 创建配置文件 `/etc/wireguard/wg0.conf`，内容如下所示。用刚刚生成的私钥替换`<Private Key>`，IP地址可以按需更换。  
 
-```conf
+    ```conf
 [Interface]
 Address = 10.14.0.1/24
 SaveConfig = true
@@ -70,21 +70,21 @@ PrivateKey = <Private Key>
 
 1. 启动Wireguard  
 
-```bash
+    ```bash
 wg-quick up wg0
 
 ```
 
 2. 开机自动启动  
 
-```bash
+    ```bash
 systemctl enable wg-quick@wg0
 
 ```
 
 3. 查看Wireguard运行状态  
 
-```bash
+    ```bash
 wg show
 ```
 
@@ -118,7 +118,7 @@ wg0: flags=209<UP,POINTOPOINT,RUNNING,NOARP>  mtu 1420
 
 1. 首先可以将opkg源替换为国内源`mirrors.ustc.edu.cn/lede/`  
 
-```bash
+    ```bash
 opkg update
 opkg install luci-proto-wireguard luci-app-wireguard wireguard kmod-wireguard wireguard-tools
 # module not found udp_tunnel
@@ -129,7 +129,7 @@ reboot
 
 2. 生成Wireguard密钥， 跟服务器上操作一样  
 
-```bash
+    ```bash
 umask 077
 mkdir -p /etc/wireguard/ssl && cd /etc/wireguard/ssl
 wg genkey | tee privatekey | wg pubkey > publickey
@@ -141,7 +141,7 @@ cd ..
 
 3. 设置Wireguard接口  
 
-```
+    ```
 * 登录LuCI，打开 `Netowrk>Interfaces>Add new interface`
 * 将新接口的名字也设置为wg0
 * 协议选择 `WireGuard VPN`, 确认
@@ -155,7 +155,7 @@ cd ..
 
 1. 服务器上的设置  
 
-```bash
+    ```bash
 wg-quick down wg0
 echo "
 [Peer]
