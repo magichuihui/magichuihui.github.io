@@ -19,7 +19,6 @@ comments: true
 
 ```bash
 $ sudo yum update -y
-
 ```
 
 按照官方网站上的方法安装Wireguard
@@ -28,7 +27,6 @@ $ sudo yum update -y
 $ sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 $ sudo curl -o /etc/yum.repos.d/jdoss-wireguard-epel-7.repo https://copr.fedorainfracloud.org/coprs/jdoss/wireguard/repo/epel-7/jdoss-wireguard-epel-7.repo
 $ sudo yum install wireguard-dkms wireguard-tools
-
 ```
 
 检查是否安装成功
@@ -37,27 +35,24 @@ $ sudo yum install wireguard-dkms wireguard-tools
 $ sudo modprobe wireguard
 # 查看是否成功
 $ sudo lsmod | grep wireguard
-
 ```
 
 ## 服务器上配置Wireguard
 
 安装成功之后我们在服务器上配置Wireguard, 以下操作都使用root账户
 
-1. 生成Wireguard密钥
+1. 生成Wireguard密钥  
 
-    ```bash
-    umask 077
-    mkdir -p /etc/wireguard/ssl && cd /etc/wireguard/ssl
-    wg genkey | tee privatekey | wg pubkey > publickey
-    # 下面需要使用这里生成的密钥
-    cat privatekey publickey
-    cd ..
+```bash
+umask 077
+mkdir -p /etc/wireguard/ssl && cd /etc/wireguard/ssl
+wg genkey | tee privatekey | wg pubkey > publickey
+# 下面需要使用这里生成的密钥
+cat privatekey publickey
+cd ..
+```
 
-    ```
-
-2. 创建配置文件 `/etc/wireguard/wg0.conf`，内容如下所示。用刚刚生成的私钥替换`<Private Key>`，IP地址可以按需更换。
-
+2. 创建配置文件 `/etc/wireguard/wg0.conf`，内容如下所示。用刚刚生成的私钥替换`<Private Key>`，IP地址可以按需更换。  
 
 ```conf
 [Interface]
@@ -67,28 +62,27 @@ PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o
 PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE;
 ListenPort = 51820
 PrivateKey = <Private Key>
-
 ```
 
 我们的服务器没有使用系统防火墙，所以如果你可能需要自行开放51820的UDP端口
 
 ## 启动Wireguard服务
 
-1. 启动Wireguard
+1. 启动Wireguard  
 
 ```bash
 wg-quick up wg0
 
 ```
 
-2. 开机自动启动
+2. 开机自动启动  
 
 ```bash
 systemctl enable wg-quick@wg0
 
 ```
 
-3. 查看Wireguard运行状态
+3. 查看Wireguard运行状态  
 
 ```bash
 wg show
@@ -122,7 +116,7 @@ wg0: flags=209<UP,POINTOPOINT,RUNNING,NOARP>  mtu 1420
 
 ## OpenWrt上安装
 
-1.首先可以将opkg源替换为国内源`mirrors.ustc.edu.cn/lede/`
+1. 首先可以将opkg源替换为国内源`mirrors.ustc.edu.cn/lede/`  
 
 ```bash
 opkg update
@@ -133,7 +127,7 @@ reboot
 ```
 
 
-2.生成Wireguard密钥， 跟服务器上操作一样
+2. 生成Wireguard密钥， 跟服务器上操作一样  
 
 ```bash
 umask 077
@@ -145,7 +139,7 @@ cd ..
 
 ```
 
-3.设置Wireguard接口
+3. 设置Wireguard接口  
 
 ```
 * 登录LuCI，打开 `Netowrk>Interfaces>Add new interface`
@@ -159,7 +153,7 @@ cd ..
 
 ## 连接OpenWrt与服务器
 
-1. 服务器上的设置
+1. 服务器上的设置  
 
 ```bash
 wg-quick down wg0
@@ -174,7 +168,7 @@ wg-quick up wg0
 
 用OpenWrt上生成publickey替换`<OpenWrt's publickey>`
 
-2. OpenWrt上的设置
+2. OpenWrt上的设置  
 
 * LuCI中打开 `Network>Interfaces>WG0>Edit>Peers>Add peer`
 * `Public Key`栏填在服务器上生成的 publickey
