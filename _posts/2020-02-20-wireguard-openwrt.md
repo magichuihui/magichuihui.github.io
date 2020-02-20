@@ -181,7 +181,7 @@ service network restart
 
 ## OpenWrt防火墙设置
 
-到此在OpenWrt上已经访问服务器的网络，下面需要设置防火墙让我们局域网里面的机器可以访问服务器
+到此在OpenWrt上已经能够访问服务器的网络，下面需要设置防火墙让我们局域网里面的机器可以访问服务器
 
 LuCI中打开`Network>Firewall>NAT Rules>Add`，添加如下设置
 
