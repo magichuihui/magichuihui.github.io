@@ -8,7 +8,7 @@ comments: true
 
 近期由于某些原因家里路由器上安装的Shadowsocks + ChinaDNS不能正常使用了，正好服务商开始提供Trojan服务，于是就想着把路由器上也安装Trojan。Trojan目前还没有官方OpenWrt安装包，只提供了源码 [openwrt-trojan](https://github.com/trojan-gfw/openwrt-trojan)，需要自行编译。
 
-安装过程分为一下三步：
+安装过程分为以下三步：
 
 * 配置`Trojan`作为透明代理，类似于`ss-redir`的功能
 * 设置`iptables`规则，使国内跟国外流量分流
@@ -46,21 +46,21 @@ mv ../openwrt-trojan/trojan ../openwrt-trojan/openssl1.1 package/
 
 3. 编译，参考资料[<sup>2</sup>](#refer-2)
 
+
     ```bash
-# 更新库
 ./scripts/feeds update -a
 ./scripts/feeds install -a
 
 make menuconfig
     ```
 
-这里的`Target System`的选择可以从OpenWrt的设备页面寻找，例如：[WNDR4300](https://openwrt.org/toh/hwdata/netgear/netgear_wndr4300_v1)。选中`Package the OpenWrt-based Toolchain`，然后在下面的package里找到并选择`trojan`（M才会编译成.ipk)。
+    这里的`Target System`的选择可以从OpenWrt的设备页面寻找，例如：[WNDR4300](https://openwrt.org/toh/hwdata/netgear/netgear_wndr4300_v1)。选中`Package the OpenWrt-based Toolchain`，然后在下面的package里找到并选择`trojan`（M才会编译成.ipk)。
 
-```bash
+    ```bash
 make -j5 V=s 2>&1 | tee build.log | grep -i '[^_-"a-z]error[^_-.a-z]'
-```
+    ```
 
-漫长地等待之后在`bin`目录里可以找到 `trojan-1.4.1xxxxx.ipk`，上传到路由器的 `/tmp` 目录供我们安装。
+    漫长地等待之后在`bin`目录里可以找到 `trojan-1.4.1xxxxx.ipk`，上传到路由器的 `/tmp` 目录供我们安装。
 
 4. 安装Trojan
 
