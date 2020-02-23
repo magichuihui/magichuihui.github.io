@@ -43,7 +43,7 @@ git checkout v19.07.1
 mv ../openwrt-trojan/trojan ../openwrt-trojan/openssl1.1 package/
     ```
 
-这里一定选择跟路由器固件版本相同的分支，否则可能会有安装包版本冲突
+    这里一定选择跟路由器固件版本相同的分支，否则可能会有安装包版本冲突
 
 3. 编译，参考资料[<sup>2</sup>](#refer-2)
 
