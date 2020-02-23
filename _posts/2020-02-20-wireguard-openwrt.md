@@ -2,7 +2,7 @@
 layout: post
 title: Wireguard连通云服务器与OpenWrt
 date: 2020-02-20
-tags: [wireguard, openwrt, vpn]
+tags: [OpenWrt, vpn]
 comments: true
 ---
 
