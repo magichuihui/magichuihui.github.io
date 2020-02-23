@@ -25,7 +25,7 @@ comments: true
 我这里是在`Fedora 31`下进行编译的，FreeBSD下没有成功。具体方法可以参考官方文档[<sup>1</sup>](#refer-1)。
 
 1. 安装依赖
-
+    
     ```bash
 dnf groupinstall "Development Tools"
 dnf groupinstall "C Development Tools and Libraries"
@@ -43,7 +43,8 @@ git checkout v19.07.1
 mv ../openwrt-trojan/trojan ../openwrt-trojan/openssl1.1 package/
     ```
 
-    这里一定选择跟路由器固件版本相同的分支，否则可能会有安装包版本冲突
+这里一定选择跟路由器固件版本相同的分支，否则可能会有安装包版本冲突
+
 3. 编译，参考资料[<sup>2</sup>](#refer-2)
 
 
