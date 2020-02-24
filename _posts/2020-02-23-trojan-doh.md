@@ -34,33 +34,33 @@ dnf install python2
 
 2. 下载源码
 
-```bash
+    ```bash
 git clone https://git.openwrt.org/openwrt/openwrt.git
 git clone https://github.com/trojan-gfw/openwrt-trojan.git
 cd openwrt
 # 选择路由器固件的分支
 git checkout v19.07.1
 mv ../openwrt-trojan/trojan ../openwrt-trojan/openssl1.1 package/
-```
+    ```
     
-这里一定选择跟路由器固件版本相同的分支，否则可能会有安装包版本冲突
+    这里一定选择跟路由器固件版本相同的分支，否则可能会有安装包版本冲突
 
 3. 编译，参考资料[<sup>2</sup>](#refer-2)
 
-```bash
+    ```bash
 ./scripts/feeds update -a
 ./scripts/feeds install -a
 
 make menuconfig
-```
+    ```
 
-这里的`Target System`的选择可以从OpenWrt的设备页面寻找，例如：[WNDR4300](https://openwrt.org/toh/hwdata/netgear/netgear_wndr4300_v1)。选中`Package the OpenWrt-based Toolchain`，然后在下面的package里找到并选择`trojan`（M才会编译成.ipk)。
+    这里的`Target System`的选择可以从OpenWrt的设备页面寻找，例如：[WNDR4300](https://openwrt.org/toh/hwdata/netgear/netgear_wndr4300_v1)。选中`Package the OpenWrt-based Toolchain`，然后在下面的package里找到并选择`trojan`（M才会编译成.ipk)。
 
-```bash
+    ```bash
 make -j5 V=s 2>&1 | tee build.log | grep -i '[^_-"a-z]error[^_-.a-z]'
-```
+    ```
 
-漫长地等待之后在`bin`目录里可以找到 `trojan-1.4.1xxxxx.ipk`，上传到路由器的 `/tmp` 目录供我们安装。
+    漫长地等待之后在`bin`目录里可以找到 `trojan-1.4.1xxxxx.ipk`，上传到路由器的 `/tmp` 目录供我们安装。
 
 4. 安装Trojan
 
