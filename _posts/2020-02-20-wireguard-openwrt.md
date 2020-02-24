@@ -59,13 +59,13 @@ cd ..
 [Interface]
 Address = 10.14.0.1/24
 SaveConfig = true
-PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE;
-PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE;
+PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE; iptables -t nat -A POSTROUTING -o wg0 -j MASQUERADE;
+PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE; iptables -t nat -D POSTROUTING -o wg0 -j MASQUERADE;
 ListenPort = 51820
 PrivateKey = <Private Key>
     ```
 
-我们的服务器没有使用系统防火墙，所以如果你可能需要自行开放51820的UDP端口
+我们的服务器没有使用`iptables`等系统防火墙，所以如果你可能需要自行开放51820的UDP端口。
 
 ## 启动Wireguard服务
 
@@ -111,6 +111,12 @@ wg0: flags=209<UP,POINTOPOINT,RUNNING,NOARP>  mtu 1420
         TX packets 25463  bytes 19192484 (18.3 MiB)
         TX errors 0  dropped 337 overruns 0  carrier 0  collisions 0
 
+```
+
+`SaveConfig = true`使执行命令`wg-quick down wg0`时，会把当前运行中的 `wg0` 的状态写入配置文件，所以你可能会想将此参数关掉。这里有一个有用的命令可以把修改后的配置应用到`wg0`，而不重启虚拟网卡： 
+
+```bash
+wg addconf wg0 <(wg-quick strip wg0)
 ```
 
 ## OpenWrt上安装
@@ -191,3 +197,9 @@ LuCI中打开`Network>Firewall>NAT Rules>Add`，添加如下设置
 > Outbound device: wg0  
 
 保存并应用，然后在电脑试试吧
+
+## 参考
+
+<div id="refer-1"></div>
+
+- [1]  [OpenWRT WireGuard VPN Server Tutorial](https://www.reddit.com/r/openwrt/comments/bahhua/openwrt_wireguard_vpn_server_tutorial/)
