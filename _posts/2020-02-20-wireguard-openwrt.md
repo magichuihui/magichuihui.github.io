@@ -1,6 +1,7 @@
 ---
 layout: post
-title: Wireguard连通云服务器与OpenWrt
+title: Wireguard连接云服务器与OpenWrt
+excerpt: Wireguard连接云服务器与OpenWrt
 date: 2020-02-20
 tags: [OpenWrt, vpn]
 comments: true

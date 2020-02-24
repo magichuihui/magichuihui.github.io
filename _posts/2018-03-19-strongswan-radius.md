@@ -1,6 +1,7 @@
 ---
 layout: post
 title: CentOS6.5部署VPN管理系统（Strongswan + letsencrypt + Freeradius + MySQL + Daloradius)
+excerpt: Strongswan + letsencrypt + Freeradius + MySQL + Daloradius 部署VPN
 date: 2018-03-19
 tags: [vpn]
 comments: true

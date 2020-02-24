@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Trojan + https-dns-proxy 实现OpenWrt科学上网
+excerpt: Trojan + https-dns-proxy 实现OpenWrt科学上网
 date: 2020-02-23
 tags: [OpenWrt, trojan]
 comments: true
