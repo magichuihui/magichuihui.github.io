@@ -61,9 +61,9 @@ make -j5 V=s 2>&1 | tee build.log | grep -i '[^_-"a-z]error[^_-.a-z]'
 ```
 
 漫长地等待之后在`bin`目录里可以找到 `trojan-1.4.1xxxxx.ipk`，上传到路由器的 `/tmp` 目录供我们安装。
-
-4. 安装Trojan
     
+4. 安装Trojan
+
 登录路由器安装`Trojan`
 
 ```bash
