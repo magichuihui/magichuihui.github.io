@@ -11,11 +11,10 @@ comments: true
 
 * OS: CentOS release 6.5 (Final)
 * domain: vpn.example.com（请自行替换）
-* Strongswan: strongswan-5.6.2
-* freeradius: freeradius-2.2.6
-* MySQL: MySQL5.6
+* Strongswan: strongswan-5.6.3
+* freeradius: freeradius-1.2.6
+* MySQL: MySQL5.7
 * daloradius
-
 
 ## 二、安装配置Strongswan + letsencrypt
 
@@ -77,13 +76,14 @@ mv certbot-auto /usr/bin/
 server {
     listen 80;
     server_name vpn.example.com;
-    
+
     # 此目录需要与 certbot 命令的参数一致
     location / {
         root /var/www/vpn;
     }
 }
 ```
+
 certbot-auto 更新证书
 
 ```bash
@@ -200,7 +200,6 @@ iptables -A FORWARD -s 10.0.0.0/8 -d 10.0.0.0/16 -o eth0 -m policy --dir out --p
 ```
 
 重启ipsec `ipsec restart`，然后可以连接客户端进行测试了
-
 
 ## 三、部署freeradius + MySQL + daloradius
 
@@ -376,7 +375,7 @@ vim /etc/raddb/sql/mysql/counter.conf
                   UNIX_TIMESTAMP(acctstarttime) + acctsessiontime > '%b'"
 ```
 
-```
+```bash
 vim /etc/raddb/sites-available/default
 
 authorize {
@@ -397,7 +396,7 @@ authorize {
 }
 ```
 
-```
+```bash
 vim /etc/raddb/dictionary
 
 # 添加以下属性
@@ -407,7 +406,7 @@ ATTRIBUTE   Max-Daily-Session       3001    integer
 
 在mysql中创建相应的策略
 
-```
+```bash
 mysql -uradius -p
 
 mysql> USE radius;
@@ -420,9 +419,9 @@ VALUES ('user', 'Login-Time', ':=', 'Al0001-2359');
 
 ### 2. 限制用每天、每月的流量
 
-```
+```bash
 # vim /etc/raddb/sql/mysql/counter.conf
-    
+
 #在最后添加以下：
 sqlcounter dailytrafficcounter {
     counter-name = Daily-Traffic
@@ -446,7 +445,7 @@ sqlcounter monthlytrafficcounter {
 
 ```
 
-```
+```bash
 # vim /etc/raddb/dictionary
 
 # 添加
@@ -456,7 +455,7 @@ ATTRIBUTE   Max-Monthly-Traffic     3004    integer
 ATTRIBUTE   Monthly-Traffic-Limit   3005    integer
 ```
 
-```
+```bash
 # vi /etc/raddb/sites-available/default
 
 # 在193行下面添加
@@ -466,7 +465,7 @@ monthlytrafficcounter
 
 在MySQL中添加相关策略
 
-```
+```bash
 # mysql -uroot -p
 
 mysql> USE radius;
@@ -483,7 +482,6 @@ VALUES ('user', 'Max-Daily-Traffic', ':=', '1073741824');
 ```
 
 至此，基于radius验证的，使用 Let's Encrypt 作为证书的 VPN 已经部署完毕
-
 
 ## 六、Centos 7 上客户端的设置
 
