@@ -20,7 +20,6 @@ comments: true
 * Fedora 31 Workstation
 * OpenWrt 19.07.1
 
-
 ## 编译并安装Trojan
 
 我这里是在`Fedora 31`下进行编译的，FreeBSD下没有成功。具体方法可以参考官方文档[<sup>1</sup>](#refer-1)。

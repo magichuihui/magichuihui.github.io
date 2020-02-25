@@ -192,11 +192,11 @@ sysctl -p
 b. 设置iptables
 
 ```bash
-iptables -t nat -A POSTROUTING -s 10.0.0.0/16 -d 10.0.0.0/8 -j MASQUERADE 
-iptables -t nat -A POSTROUTING -s 10.0.0.0/8 -d 10.0.0.0/16 -j MASQUERADE 
+iptables -t nat -A POSTROUTING -s 10.0.0.0/16 -d 10.0.0.0/8 -j MASQUERADE
+iptables -t nat -A POSTROUTING -s 10.0.0.0/8 -d 10.0.0.0/16 -j MASQUERADE
 
-iptables -A FORWARD -s 10.0.0.0/16 -d 10.0.0.0/8 -i eth0 -m policy --dir in --pol ipsec --reqid 1 --proto esp -j ACCEPT 
-iptables -A FORWARD -s 10.0.0.0/8 -d 10.0.0.0/16 -o eth0 -m policy --dir out --pol ipsec --reqid 1 --proto esp -j ACCEPT 
+iptables -A FORWARD -s 10.0.0.0/16 -d 10.0.0.0/8 -i eth0 -m policy --dir in --pol ipsec --reqid 1 --proto esp -j ACCEPT
+iptables -A FORWARD -s 10.0.0.0/8 -d 10.0.0.0/16 -o eth0 -m policy --dir out --pol ipsec --reqid 1 --proto esp -j ACCEPT
 ```
 
 重启ipsec `ipsec restart`，然后可以连接客户端进行测试了
@@ -471,11 +471,11 @@ monthlytrafficcounter
 mysql> USE radius;
 mysql> TRUNCATE TABLE radacct;
 mysql> INSERT INTO radgroupcheck (groupname , attribute , op , value ) \
-VALUES ('user', 'Max-Monthly-Traffic', ':=', '10737418240'); 
-# 10737418240 bytes = 10*1024*1024*1024 bytes=10 Gbyte, 
+VALUES ('user', 'Max-Monthly-Traffic', ':=', '10737418240');
+# 10737418240 bytes = 10*1024*1024*1024 bytes=10 Gbyte,
 # 填写时以byte为单位 每月最大流量10G
 mysql> INSERT INTO radgroupcheck (groupname , attribute , op , value ) \
-VALUES ('user', 'Max-Daily-Traffic', ':=', '1073741824'); 
+VALUES ('user', 'Max-Daily-Traffic', ':=', '1073741824');
 # 1073741824 bytes=1024*1024*1024 = 1 Gbyte 每天最大流量为1G
 
 # service radiusd restart
@@ -526,7 +526,7 @@ wget https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem.txt -O \
 Lets encrypt 的根CA证书可用从 [DST ROOT CA X3](https://www.identrust.com/certificates/trustid/root-download-x3.html) 下载，并且在开头和结尾加上"-----BEGIN CERTIFICATE-----"和"-----END CERTIFICATE-----"
 
 ```bash
-# cat /etc/strongswan/ipsec.d/cacerts/dst_root_ca_x3.pem 
+# cat /etc/strongswan/ipsec.d/cacerts/dst_root_ca_x3.pem
 -----BEGIN CERTIFICATE-----
 MIIDSjCCAjKgAwIBAgIQRK+wgNajJ7qJMDmGLvhAazANBgkqhkiG9w0BAQUFADA/
 MSQwIgYDVQQKExtEaWdpdGFsIFNpZ25hdHVyZSBUcnVzdCBDby4xFzAVBgNVBAMT
