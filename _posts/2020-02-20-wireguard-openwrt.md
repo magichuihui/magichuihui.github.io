@@ -19,23 +19,23 @@ comments: true
 首先更新系统内核，这里要确保`kernel`与`kernel-header`是同一个版本，我更新了kernel跟kernel-header，执行`modprobe wireguard`仍然报错`Module wireguard not found`,无法加载wireguard。Google也没有找到解决办法，直接完全更新后竟然可以用了
 
 ```bash
-$ sudo yum update -y
+yum update -y
 ```
 
 按照官方网站上的方法安装Wireguard
 
 ```bash
-$ sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-$ sudo curl -o /etc/yum.repos.d/jdoss-wireguard-epel-7.repo https://copr.fedorainfracloud.org/coprs/jdoss/wireguard/repo/epel-7/jdoss-wireguard-epel-7.repo
-$ sudo yum install wireguard-dkms wireguard-tools
+yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+curl -o /etc/yum.repos.d/jdoss-wireguard-epel-7.repo https://copr.fedorainfracloud.org/coprs/jdoss/wireguard/repo/epel-7/jdoss-wireguard-epel-7.repo
+yum install wireguard-dkms wireguard-tools
 ```
 
 检查是否安装成功
 
 ```bash
-$ sudo modprobe wireguard
+modprobe wireguard
 # 查看是否成功
-$ sudo lsmod | grep wireguard
+lsmod | grep wireguard
 ```
 
 ## 服务器上配置Wireguard
@@ -45,102 +45,103 @@ $ sudo lsmod | grep wireguard
 1. 生成Wireguard密钥
 
     ```bash
-umask 077
-mkdir -p /etc/wireguard/ssl && cd /etc/wireguard/ssl
-wg genkey | tee privatekey | wg pubkey > publickey
-# 下面需要使用这里生成的密钥
-cat privatekey publickey
-cd ..
+    umask 077
+    mkdir -p /etc/wireguard/ssl && cd /etc/wireguard/ssl
+    wg genkey | tee privatekey | wg pubkey > publickey
+    # 下面需要使用这里生成的密钥
+    cat privatekey publickey
+    cd ..
     ```
 
 2. 创建配置文件 `/etc/wireguard/wg0.conf`，内容如下所示。用刚刚生成的私钥替换`<Private Key>`，IP地址可以按需更换。
 
     ```conf
-[Interface]
-Address = 10.14.0.1/24
-SaveConfig = true
-PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE; iptables -t nat -A POSTROUTING -o wg0 -j MASQUERADE;
-PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE; iptables -t nat -D POSTROUTING -o wg0 -j MASQUERADE;
-ListenPort = 51820
-PrivateKey = <Private Key>
+    [Interface]
+    Address = 10.14.0.1/24
+    SaveConfig = true
+    PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE; iptables -t nat -A POSTROUTING -o wg0 -j MASQUERADE;
+    PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE; iptables -t nat -D POSTROUTING -o 	wg0 -j MASQUERADE;
+    ListenPort = 51820
+    PrivateKey = <Private Key>
     ```
 
-我们的服务器没有使用`iptables`等系统防火墙，所以如果你可能需要自行开放51820的UDP端口。
+    我们的服务器没有使用`iptables`等系统防火墙，所以如果你可能需要自行开放51820的UDP端口。
 
 ## 启动Wireguard服务
 
 1. 启动Wireguard
 
     ```bash
-wg-quick up wg0
+    wg-quick up wg0
     ```
 
 2. 开机自动启动
 
     ```bash
-systemctl enable wg-quick@wg0
+    systemctl enable wg-quick@wg0
     ```
 
 3. 查看Wireguard运行状态
 
     ```bash
-wg show
+    wg show
     ```
 
-会看见如下输出：
-```
-[root@VM_123_123_centos ~]# wg show
-interface: wg0
-  public key: +/VeIJIW9+GT7SxQ5XCdyPsvNiTtBBLFlKuGqCAM3Dw=
-  private key: (hidden)
-  listening port: 51820
-```
+    会看见如下输出：
 
-```bash
-ifconfig wg0
-```
+    ```bash
+    [root@VM_123_123_centos ~]# wg show
+    interface: wg0
+          public key: +/VeIJIW9+GT7SxQ5XCdyPsvNiTtBBLFlKuGqCAM3Dw=
+          private key: (hidden)
+          listening port: 51820
+    ```
 
-新增的网络接口
-```
-[root@VM_123_123_centos ~]# ifconfig wg0
-wg0: flags=209<UP,POINTOPOINT,RUNNING,NOARP>  mtu 1420
-        inet 10.14.0.1  netmask 255.255.255.0  destination 10.14.0.1
-        unspec 00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00  txqueuelen 1000  (UNSPEC)
-        RX packets 13314  bytes 2263368 (2.1 MiB)
-        RX errors 1809  dropped 6  overruns 0  frame 1809
-        TX packets 25463  bytes 19192484 (18.3 MiB)
-        TX errors 0  dropped 337 overruns 0  carrier 0  collisions 0
+    ```bash
+    ifconfig wg0
+    ```
 
-```
+    新增的网络接口
 
-`SaveConfig = true`使执行命令`wg-quick down wg0`时，会把当前运行中的 `wg0` 的状态写入配置文件，所以你可能会想将此参数关掉。这里有一个有用的命令可以把修改后的配置应用到`wg0`，而不重启虚拟网卡： 
+    ```bash
+    [root@VM_123_123_centos ~]# ifconfig wg0
+    wg0: flags=209<UP,POINTOPOINT,RUNNING,NOARP>  mtu 1420
+            inet 10.14.0.1  netmask 255.255.255.0  destination 10.14.0.1
+            unspec 00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00  txqueuelen 1000  (UNSPEC)
+            RX packets 13314  bytes 2263368 (2.1 MiB)
+            RX errors 1809  dropped 6  overruns 0  frame 1809
+            TX packets 25463  bytes 19192484 (18.3 MiB)
+            TX errors 0  dropped 337 overruns 0  carrier 0  collisions 0
+    ```
 
-```bash
-wg addconf wg0 <(wg-quick strip wg0)
-```
+    `SaveConfig = true`使执行命令`wg-quick down wg0`时，会把当前运行中的 `wg0` 的状态写入配置文件，所以你可能会想将此参数关掉。这里有一个有用的命令可以把修改后的配置应用到`wg0`，而不重启虚拟网卡： 
+
+    ```bash
+    wg addconf wg0 <(wg-quick strip wg0)
+    ```
 
 ## OpenWrt上安装
 
 1. 首先可以将opkg源替换为国内源`mirrors.ustc.edu.cn/lede/`
 
     ```bash
-opkg update
-opkg install luci-proto-wireguard luci-app-wireguard wireguard kmod-wireguard wireguard-tools
-# module not found udp_tunnel
-opkg install kmod-udptunnel4
-reboot
+    opkg update
+    opkg install luci-proto-wireguard luci-app-wireguard wireguard kmod-wireguard wireguard-tools
+    # module not found udp_tunnel
+    opkg install kmod-udptunnel4
+    reboot
     ```
 
 
 2. 生成Wireguard密钥， 跟服务器上操作一样
 
     ```bash
-umask 077
-mkdir -p /etc/wireguard/ssl && cd /etc/wireguard/ssl
-wg genkey | tee privatekey | wg pubkey > publickey
-# 下面需要使用这里生成的密钥
-cat privatekey publickey
-cd ..
+    umask 077
+    mkdir -p /etc/wireguard/ssl && cd /etc/wireguard/ssl
+    wg genkey | tee privatekey | wg pubkey > publickey
+    # 下面需要使用这里生成的密钥
+    cat privatekey publickey
+    cd ..
     ```
 
 3. 设置Wireguard接口
@@ -158,17 +159,17 @@ cd ..
 1. 服务器上的设置
 
     ```bash
-wg-quick down wg0
-echo "
-[Peer]
-PublicKey = <OpenWrt's publickey>
-AllowedIPs = 10.14.0.0/24
-PersistentKeepalive = 25
-" >> /etc/wireguard/wg0.conf
-wg-quick up wg0
+    wg-quick down wg0
+    echo "
+    [Peer]
+    PublicKey = <OpenWrt's publickey>
+    AllowedIPs = 10.14.0.0/24
+    PersistentKeepalive = 25
+    " >> /etc/wireguard/wg0.conf
+    wg-quick up wg0
     ```
 
-用OpenWrt上生成publickey替换`<OpenWrt's publickey>`
+    用OpenWrt上生成publickey替换`<OpenWrt's publickey>`
 
 2. OpenWrt上的设置
 
@@ -181,10 +182,11 @@ wg-quick up wg0
     * `Persistent Keep Alive`填25
     * 保存并应用
 
-重启路由器或者网络
-```bash
-service network restart
-```
+    重启路由器或者网络
+
+    ```bash
+    service network restart
+    ```
 
 ## OpenWrt防火墙设置
 
@@ -202,4 +204,4 @@ LuCI中打开`Network>Firewall>NAT Rules>Add`，添加如下设置
 
 <div id="refer-1"></div>
 
-- [1]  [OpenWRT WireGuard VPN Server Tutorial](https://www.reddit.com/r/openwrt/comments/bahhua/openwrt_wireguard_vpn_server_tutorial/)
+* [1]  [OpenWRT WireGuard VPN Server Tutorial](https://www.reddit.com/r/openwrt/comments/bahhua/openwrt_wireguard_vpn_server_tutorial/)
