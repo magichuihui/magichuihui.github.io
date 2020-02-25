@@ -23,7 +23,7 @@ comments: true
 
 ## 编译并安装Trojan
 
-我这里是在`Fedora 31`下进行编译的，FreeBSD下没有成功。具体方法可以参考官方文档[^1^](#refer-1)。
+我这里是在`Fedora 31`下进行编译的，FreeBSD下没有成功。具体方法可以参考官方文档[<sup>1</sup>](#refer-1)。
 
 1. 安装依赖
 
@@ -46,7 +46,7 @@ comments: true
 
     这里一定选择跟路由器固件版本相同的分支，否则可能会有安装包版本冲突
 
-3. 编译，参考资料[^2^](#refer-2)
+3. 编译，参考资料[<sup>2</sup>](#refer-2)
 
     ```bash
     ./scripts/feeds update -a
@@ -114,7 +114,7 @@ comments: true
 
 ## 配置iptables
 
-因我之前已经装了shadowsocks，iptables已经由`/usr/bin/ss-rules`设置好了，所以我直接在`/etc/init.d/trojan`里加上shadowsocks关于防火墙的设置。下面我们不使用ss-rules，而是直接设置iptables。iptables设置方法参考[^3^](#refer-3)，Chnroute参考[^4^](#refer-4)
+因我之前已经装了shadowsocks，iptables已经由`/usr/bin/ss-rules`设置好了，所以我直接在`/etc/init.d/trojan`里加上shadowsocks关于防火墙的设置。下面我们不使用ss-rules，而是直接设置iptables。iptables设置方法参考[<sup>3</sup>](#refer-3)，Chnroute参考[<sup>4</sup>](#refer-4)
 
 新建一个文件 /usr/bin/trojan-up.sh，在trojan启动时设置防火墙。内容如下
 
@@ -124,7 +124,7 @@ comments: true
 SOCKS_SERVER=x.x.x.x
 # Setup the ipset
 ipset -! restore <<-EOF
-    create chnroute hash:net hashsize 64 
+    create chnroute hash:net hashsize 64
     $(for ip in $(cat /etc/chnroute.txt); do echo "add chnroute $ip"; done)
 EOF
 
@@ -186,7 +186,7 @@ ipset destroy chnroute
 
 然后在`Trojan`的启动文件`/etc/init.d/trojan`脚本加上这2个文件，这样iptables规则跟随trojan生灭。
 
-## https-dns-proxy 解决DNS污染[^5^](#refer-5)
+## https-dns-proxy 解决DNS污染[<sup>5</sup>](#refer-5)
 
 ```bash
 opkg update
