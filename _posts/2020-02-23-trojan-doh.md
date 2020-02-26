@@ -115,6 +115,13 @@ comments: true
 
 因我之前已经装了shadowsocks，iptables已经由`/usr/bin/ss-rules`设置好了，所以我直接在`/etc/init.d/trojan`里加上shadowsocks关于防火墙的设置。下面我们不使用ss-rules，而是直接设置iptables。iptables设置方法参考[<sup>3</sup>](#refer-3)，Chnroute参考[<sup>4</sup>](#refer-4)
 
+首先需要安装 `ipset`，通过它可以把`chnroute`的IP地址作为一个组加到`iptables`。
+
+```bash
+opkg update
+opkg install ipset
+```
+
 新建一个文件 /usr/bin/trojan-up.sh，在trojan启动时设置防火墙。内容如下
 
 ```bash
