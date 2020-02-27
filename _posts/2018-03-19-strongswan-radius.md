@@ -90,7 +90,7 @@ certbot-auto 更新证书
 certbot-auto certonly --webroot -w /var/www/vpn -d vpn.example.com
 
 # certbot 自动更新证书
-echo "0 0,12 * * * root python -c 'import random; import time; 
+echo "0 0,12 * * * root python -c 'import random; import time;
     time.sleep(random.random() * 3600)' && /usr/bin/certbot-auto renew" \
     >> /etc/crontab
 
