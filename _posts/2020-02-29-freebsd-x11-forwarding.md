@@ -71,12 +71,12 @@ bhyve -AHP -s 0:0,hostbridge -s 31:0,lpc \
 -s 4:0,ahci-cd,./Fedora-Server-dvd-x86_64-31-1.9.iso
 -c 4 -m 8192M \
 -s 20,xhci,tablet \
--s 29,fbuf,tcp=0.0.0.0:5900,w=1920,h=1080 \
+-s 29,fbuf,tcp=0.0.0.0:5900,w=1920,h=1080,wait \
 -l bootrom,/usr/local/share/uefi-firmware/BHYVE_UEFI.fd \
 fedora
 ```
 
-We just create a VNC server for the Guest by adding the `-s 29,fbuf,tcp=0.0.0.0:5900` flags. The Guest will boot, we can connect to it via a VNC client and finish the install procedure, after we install Fedora 31 on the virtual machine, reboot the Guest. Here we have to remove the instance of the virtual machine unless it cannot be started again.
+We just create a VNC server for the Guest by adding the `-s 29,fbuf,tcp=0.0.0.0:5900,w=1920,h=1080,wait` flags. The Guest will boot, we can connect to it via a VNC client and finish the install procedure, after we install Fedora 31 on the virtual machine, reboot the Guest. Here we have to remove the instance of the virtual machine unless it cannot be started again.
 
 ```bash
 bhyvectl --destroy --vm=fedora
