@@ -59,7 +59,7 @@ lsmod | grep wireguard
     [Interface]
     Address = 10.14.0.1/24
     SaveConfig = true
-    PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE; iptables -t nat -A POSTROUTING -o wg0 -j MASQUERADE;
+    PostUp = iptables -I FORWARD -i wg0 -j ACCEPT; iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE; iptables -t nat -I POSTROUTING -o wg0 -j MASQUERADE;
     PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE; iptables -t nat -D POSTROUTING -o 	wg0 -j MASQUERADE;
     ListenPort = 51820
     PrivateKey = <Private Key>
@@ -114,7 +114,7 @@ lsmod | grep wireguard
             TX errors 0  dropped 337 overruns 0  carrier 0  collisions 0
     ```
 
-    `SaveConfig = true`使执行命令`wg-quick down wg0`时，会把当前运行中的 `wg0` 的状态写入配置文件，所以你可能会想将此参数关掉。这里有一个有用的命令可以把修改后的配置应用到`wg0`，而不重启虚拟网卡： 
+    `SaveConfig = true`使执行命令`wg-quick down wg0`时，会把当前运行中的 `wg0` 的状态写入配置文件，所以你可能会想将此参数关掉。这里有一个有用的命令可以把修改后的配置应用到`wg0`，而不重启虚拟网卡：
 
     ```bash
     wg addconf wg0 <(wg-quick strip wg0)
