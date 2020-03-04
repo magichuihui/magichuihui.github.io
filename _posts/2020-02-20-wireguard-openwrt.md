@@ -132,7 +132,6 @@ lsmod | grep wireguard
     reboot
     ```
 
-
 2. 生成Wireguard密钥， 跟服务器上操作一样
 
     ```bash
