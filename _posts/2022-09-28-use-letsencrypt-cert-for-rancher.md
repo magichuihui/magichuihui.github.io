@@ -2,7 +2,7 @@
 layout: post
 title: How to change rancher's certificate
 excerpt: Updating from a Private CA Certificate to a Common Certificate
-date: 2022-10-21
+date: 2022-09-28
 tags: [kubernetes, ceph]
 comments: true
 ---
