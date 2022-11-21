@@ -7,7 +7,7 @@ tags: [kubernetes, ceph]
 comments: true
 ---
 
-为提供更加兼容s3的对象存储，即 <bucket-name>.s3.example.com
+为提供更加兼容s3的对象存储，即 **bucket-name**.s3.example.com
 
 ## 增加DNS记录
 
