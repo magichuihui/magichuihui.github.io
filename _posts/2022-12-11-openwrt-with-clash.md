@@ -241,7 +241,7 @@ DNS=169.254.25.10
 Domains=~cluster.local
 EOF
 
-systemctl restart systemd-networkd
+systemctl enable --now systemd-networkd
 ```
 
 验证解析状态
