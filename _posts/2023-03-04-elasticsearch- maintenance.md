@@ -199,8 +199,8 @@ ElasticAlert
 
 # Reference
 
-* [ILM: Manage the index lifecycle | Elasticsearch Guide [8.6] | Elastic][1]
-* [Curator Reference [5.7] | Elastic][2]
+* [ILM: Manage the index lifecycle][1]
+* [Curator Reference][2]
 
 [1]: https://www.elastic.co/guide/en/elasticsearch/reference/current/index-lifecycle-management.html
 [2]: https://www.elastic.co/guide/en/elasticsearch/client/curator/5.7/index.html
