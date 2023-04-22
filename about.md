@@ -1,7 +1,10 @@
 ---
-layout: page
-title: 关于
-permalink: /about/
+layout: default
+title: About Kyra
 ---
 
-山与海的博客。
+<div class="post">
+	<h1 class="pageTitle">About kyra</h1>
+	<img src="{{ '/assets/img/touring.jpg' }}" alt="">
+	<p class="intro">Thoughts about devops.</p>
+</div>
