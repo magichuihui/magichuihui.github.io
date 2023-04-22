@@ -36,7 +36,7 @@ deploy:
 Add the GitLab Helm repository:
 
 ```bash
-helm repo add gitlab https://charts.gitlab.
+helm repo add gitlab https://charts.gitlab.io
 ```
 
 Then run the following to install the runner:
