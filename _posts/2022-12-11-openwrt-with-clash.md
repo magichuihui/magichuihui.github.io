@@ -55,7 +55,7 @@ scp clash-linux-mips-softfloat root@192.168.1.1:/usr/bin/clash
 ```yaml
 # /etc/clash/config.yaml
 port: 7890
-redi-port: 7892
+redir-port: 7892
 ```
 
 放到`/etc/clash/`目录下。
@@ -227,9 +227,9 @@ ln -rsf /run/systemd/resolve/resolv.conf /etc/resolv.conf
 
 ## domain-based DNS routing
 
-当我们有私有域名需要根据域名来选择DNS服务器，例如VPN、kubernetes等，我们可以通过设置`systemd-networkd`来实现
+当我们有私有域名需要根据域名来选择DNS服务器，例如需要访问VPN、kubernetes集群内部的域名等，我们可以通过设置`systemd-networkd`来实现
 
-对于`nodelocaldns`可以如下设置：
+当我们想通过kubernetes集群的DNS缓存`nodelocaldns`访问集群内部的域名时，可以如下设置：
 
 ```bash
 cat >> /etc/systemd/network/nodelocaldns.network <<'EOF'
