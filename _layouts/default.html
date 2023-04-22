@@ -1,34 +1,24 @@
 <!DOCTYPE html>
-<html>
-  {% include head.html %}
-  <body>
-    {% include nav.html %}
+<!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7"><![endif]-->
+<!--[if IE 7]><html class="no-js lt-ie9 lt-ie8" <![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9" <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
 
-    {% if page.toc==true %}
-      <aside class="toc">
-        {% include toc.html html=content %}
-      </aside>
-    {% endif %}
+{%- include head.html -%}
 
-    <div id="main" role="main" class="wrapper-content">
+<body>
+
+   {%- include header.html -%}
+
+   <div class="content">
       <div class="container">
-        {{ content }}
+         {{ content }}
       </div>
-    </div>
+   </div><!-- end .content -->
 
-    {% include analytics.html %}
-  </body>
+   {%- include footer.html -%}
+   {%- include scripts.html -%}
 
-  {% if page.toc==true %}
-  <script>
-    document.getElementById("main").classList.add("withtoc");
-  </script>
-  {% endif %}
-
-  <div class="wrapper-footer-mobile">
-    <footer class="footer">
-      {% include footer.html %}
-    </footer>
-
+</body>
 
 </html>
