@@ -61,6 +61,12 @@ $ rados listwatchers -p replicapool rbd_header.e03c7b497744a3
 watcher=10.244.6.0:0/3953292784 client.19964760 cookie=18446462598732840963
 ```
 
+或者可以使用`rbd status`查看
+
+```bash
+rbd status replicapool/csi-vol-bc41eb87-5412-11ed-ac86-ba3e04768c9d
+```
+
 最终根据IP地址找到pv所在的节点**k8s-node-6**
 
 ## 2. 卸载PVC
@@ -73,6 +79,8 @@ $ docker exec -it k8s_csi-rbdplugin_csi-rbdplugin-px5dp_rook-ceph_a1a69a28-4249-
 ## 找到pv的挂载点
 $ df -h | grep pvc-1f99d40b-bbf8-47b7-ac10-878edfa905a3
 /dev/rbd2       148G   63G   85G  43% /var/lib/kubelet/pods/3413abba-7f81-4e62-8946-ee76b515ec89/volumes/kubernetes.io~csi/pvc-1f99d40b-bbf8-47b7-ac10-878edfa905a3/mount
+
+$ rbd device list
 
 $ rbd unmap /dev/rbd4
 ```
