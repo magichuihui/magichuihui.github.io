@@ -4,5 +4,5 @@ gem "jekyll"
 gem "jekyll-paginate"
 gem "support-for"
 gem "http_parser"
-gem "webrick", "~> 1.7"
+gem "webrick", ">= 2.2.8"
  
