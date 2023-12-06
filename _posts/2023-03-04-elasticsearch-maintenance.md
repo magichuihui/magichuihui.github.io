@@ -112,9 +112,9 @@ actions:
       unit: months
 ```
 
-# 2. TODO: 冷热分离 
+# 2. Index lifecycle management
 
-结合index lifecycle mangement及index template，实现索引数据冷热分离，降低资源使用率
+结合index lifecycle management及index template，实现索引数据冷热分离，降低资源使用率
 
 ## 2.1 维护储存日志的索引
 
@@ -191,11 +191,59 @@ PUT /_index_template/log-test
 }
 ```
 
-# 3. TODO: 报警
+## 2.2 MySQL审计日志
 
-根据收集的应用日志，通过自定义规则实现报警功能
+日志只保存3天就删除
 
-ElasticAlert
+```json
+PUT /_ilm/policy/mysql-audit
+{
+  "mysql-audit" : {
+    "policy" : {
+      "phases" : {
+        "hot" : {
+          "actions" : {
+            "set_priority" : {
+              "priority" : 100
+            }
+          }
+        },
+        "delete" : {
+          "min_age" : "3d",
+          "actions" : {
+            "delete" : {
+              "delete_searchable_snapshot" : true
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+# 3. 报警
+
+根据收集的应用日志，通过自定义规则实现报警功能。可以使用logstash的webhook 或者 ElasticAlert 实现
+
+## 3.1 Logstash
+
+在output节里面增加webhook的配置，通过webhook实现发送报警到飞书或者Slack
+
+```conf
+output {
+        if [level] =="ERROR" {
+            http {
+                    url=> "http://127.0.0.1:9000/send/robot/msg"
+                    http_method =>"post"
+                    content_type => "application/json"
+                    format => "json"
+                }
+           }
+}
+```
+
+## 3.2 ElasticAlert
 
 # Reference
 

@@ -12,7 +12,7 @@ We will use Dex to delegate authentication to an external LDAP provider.
 ## 1. Patch the configmap `argocd-cm` with LDAP settings
 
 ```bash
-cat <<'EOF' | kubectl -n argocd patch cm argocd-cm --patch -
+cat <<'EOF' | kubectl -n argocd patch cm argocd-cm --patch-file=/dev/stdin
 apiVersion: v1
 data:
   url: https://argocd.example.dev
@@ -53,7 +53,7 @@ kubectl get cm argocd-cm -n argocd -o yaml
 ## 2. Patch the secret `argocd-secret`
 
 ```bash
-cat <<'EOF' | kubectl -n argocd patch secret argocd-secret --patch -
+cat <<'EOF' | kubectl -n argocd patch secret argocd-secret --patch-file=/dev/stdin
 apiVersion: v1
 kind: Secret
 metadata:
