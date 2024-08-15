@@ -51,6 +51,8 @@ ldapadd -x -H ldapi:/// -D "cn=Manager,dc=amyinfo,dc=com" -W -f manager.ldif
 
 # Create a user for testing purpose
 
+Use `slappasswd` to create the password.
+
 ```
 dn: cn=Alice,dc=amyinfo,dc=com
 changetype: add
@@ -63,3 +65,8 @@ ou: SRE
 userPassword: {SSHA}xxxxxxxxxxxxxxxxxxx
 ```
 
+Add this user to the LDAP server
+
+```bash
+ldapadd -x -H ldapi:/// -D "cn=Manager,dc=amyinfo,dc=com" -vvvv -W -f alice.ldif
+```
