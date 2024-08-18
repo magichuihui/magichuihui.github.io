@@ -125,3 +125,43 @@ vault write auth/kubernetes/role/devweb-app2 \
      policies=devwebapp \
      ttl=24h
 ```
+
+## Create two exmaple applications
+
+After we setup the auth method for Vault server with two different roles that bind to kubernetes service accout, we can create two pods that use different service account to retrieve vault secrets.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: devwebapp-with-annotations
+  labels:
+    app: devwebapp-with-annotations
+  annotations:
+    vault.hashicorp.com/agent-inject: 'true'
+    vault.hashicorp.com/role: 'devweb-app'
+    vault.hashicorp.com/agent-inject-secret-credentials.txt: 'secret/data/devwebapp/config'
+    vault.hashicorp.com/secret-volume-path-credentials.txt: '/tmp'
+spec:
+  serviceAccountName: internal-app
+  containers:
+    - name: app
+      image: burtlo/devwebapp-ruby:k8s
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: devwebapp2-with-annotations
+  labels:
+    app: devwebapp2-with-annotations
+  annotations:
+    vault.hashicorp.com/agent-inject: 'true'
+    vault.hashicorp.com/role: 'devweb-app2'
+    vault.hashicorp.com/agent-inject-secret-credentials.txt: 'secret/data/devwebapp/config'
+    vault.hashicorp.com/secret-volume-path-credentials.txt: '/tmp'
+spec:
+  serviceAccountName: internal-app2
+  containers:
+    - name: app
+      image: burtlo/devwebapp-ruby:k8s
+```
