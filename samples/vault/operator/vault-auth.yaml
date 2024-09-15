@@ -1,0 +1,51 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: role-tokenreview-binding-tenant-1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: tenant-1
+---
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  labels:
+    app.kubernetes.io/name: vaultauth
+    app.kubernetes.io/instance: vaultauth-sample
+    app.kubernetes.io/part-of: vault-secrets-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: vault-secrets-operator
+  name: vaultauth-sample
+  namespace: tenant-1
+spec:
+  vaultConnectionRef: vaultconnection-sample
+  method: kubernetes
+  mount: kubernetes
+  kubernetes:
+    role: demo
+    serviceAccount: default
+---
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  labels:
+    app.kubernetes.io/name: vaultauth
+    app.kubernetes.io/instance: vaultauth-sample
+    app.kubernetes.io/part-of: vault-secrets-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: vault-secrets-operator
+  name: vaultauth-sample
+  namespace: tenant-2
+spec:
+  vaultConnectionRef: vaultconnection-sample
+  method: kubernetes
+  mount: kubernetes
+  kubernetes:
+    role: demo
+    serviceAccount: default

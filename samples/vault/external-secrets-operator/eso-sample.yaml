@@ -1,0 +1,62 @@
+apiVersion: external-secrets.io/v1beta1
+kind: SecretStore
+metadata:
+  name: vault-backend
+  namespace: tenant-1
+spec:
+  provider:
+    vault:
+      server: "http://192.168.1.2:8200"
+      path: "kvv2"
+      version: "v2"
+      auth:
+        # Authenticate against Vault using a Kubernetes ServiceAccount
+        # token stored in a Secret.
+        # https://www.vaultproject.io/docs/auth/kubernetes
+        kubernetes:
+          # Path where the Kubernetes authentication backend is mounted in Vault
+          mountPath: "kubernetes"
+          # A required field containing the Vault Role to assume.
+          role: "demo"
+          # Optional service account field containing the name
+          # of a kubernetes ServiceAccount
+          serviceAccountRef:
+            name: "eso"
+          # Optional secret field containing a Kubernetes ServiceAccount JWT
+          #  used for authenticating with Vault
+          # secretRef:
+          #   name: "my-secret"
+          #   key: "vault"
+
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: example
+  namespace: tenant-1
+spec:
+  refreshInterval: 10s
+  secretStoreRef:
+    name: vault-backend
+    kind: SecretStore
+  target:
+    name: secret-to-be-created
+    creationPolicy: Owner
+  data:
+  - secretKey: username
+    remoteRef:
+      key: secret
+      property: username
+
+  # metadataPolicy to fetch all the labels in JSON format
+  - secretKey: tags
+    remoteRef:
+      metadataPolicy: Fetch
+      key: secret
+
+  # metadataPolicy to fetch a specific label (dev) from the source secret
+  - secretKey: author
+    remoteRef:
+      metadataPolicy: Fetch
+      key: secret
+      property: author
