@@ -95,4 +95,4 @@ for ns in tenant-{1,2} ; do
     kubectl create namespace "${ns}"
 done
 
-vault audit enable file file-path=./vault-audit.log
+vault audit enable file file_path=./vault-audit.log
