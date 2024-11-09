@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vault-test
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vault-test
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vault-test
+      annotations:
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/auth-path: "auth/kubernetes"
+        vault.hashicorp.com/role: 'devweb-app'
+        vault.hashicorp.com/log-level: "debug"
+        vault.hashicorp.com/agent-cache-enable: "true"
+        vault.hashicorp.com/agent-image: magichuihui/vault:1.17.2
+        vault.hashicorp.com/agent-inject-secret-credentials.txt: 'kvv2/secret'
+        vault.hashicorp.com/secret-volume-path-credentials.txt: '/tmp'
+        vault.hashicorp.com/secret-volume-path-delete-pod.sh: "/opt"
+        vault.hashicorp.com/agent-inject-command-credentials.txt: |
+          #!/bin/bash
+          # If this is in vault-agent-init container then return
+          cat /home/vault/config.json | grep '"exit_after_auth":true'
+          [[ "$?" == "0" ]] && exit 0
+
+          # Get the pod name and namespace
+          POD_NAME=$(hostname)
+          NAMESPACE=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
+
+          # Delete the pod by calling the Kubernetes API
+          curl -X DELETE \
+            -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" \
+            -H "Content-Type: application/json" \
+            https://$KUBERNETES_SERVICE_HOST/api/v1/namespaces/$NAMESPACE/pods/$POD_NAME \
+            --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        vault.hashicorp.com/template-static-secret-render-interval: "1m"
+    spec:
+      serviceAccountName: internal-app
+      containers:
+      - name: alpine
+        image: alpine
+        command: ["sh", "-c", "while true; do sleep 20; cat /tmp/credentials.txt; done"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
