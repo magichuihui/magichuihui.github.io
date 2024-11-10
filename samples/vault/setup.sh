@@ -90,6 +90,12 @@ vault write auth/kubernetes/role/external-secrets \
     policies=demo \
     ttl=1h
 
+vault write auth/kubernetes/role/devweb-app \
+    bound_service_account_names=internal-app \
+    bound_service_account_namespaces=default \
+    policies=demo \
+    ttl=1h
+
 for ns in tenant-{1,2} ; do
     kubectl delete namespace --wait --timeout=30s "${ns}" &> /dev/null || true
     kubectl create namespace "${ns}"
