@@ -38,7 +38,7 @@ spec:
             -H "Content-Type: application/json" \
             https://$KUBERNETES_SERVICE_HOST/api/v1/namespaces/$NAMESPACE/pods/$POD_NAME \
             --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        vault.hashicorp.com/template-static-secret-render-interval: "1m"
+        vault.hashicorp.com/template-static-secret-render-interval: "5m"
     spec:
       serviceAccountName: internal-app
       containers:
