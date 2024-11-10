@@ -7,8 +7,13 @@ metadata:
   annotations:
     vault.hashicorp.com/agent-inject: 'true'
     vault.hashicorp.com/role: 'devweb-app'
-    vault.hashicorp.com/agent-inject-secret-credentials.txt: 'secret/data/devwebapp/config'
+    vault.hashicorp.com/agent-cache-enable: "true"
+    vault.hashicorp.com/agent-image: magichuihui/vault:1.17.2
+    vault.hashicorp.com/agent-inject-secret-credentials.txt: 'kvv2/secret'
     vault.hashicorp.com/secret-volume-path-credentials.txt: '/tmp'
+    vault.hashicorp.com/secret-volume-path-delete-pod.sh: "/opt"
+    #vault.hashicorp.com/agent-inject-command-credentials.txt: "sh /opt/delete-pod.sh"
+    vault.hashicorp.com/template-static-secret-render-interval: "1m"
 spec:
   serviceAccountName: internal-app
   containers:
