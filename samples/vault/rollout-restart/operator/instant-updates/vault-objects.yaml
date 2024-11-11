@@ -1,0 +1,42 @@
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultConnection
+metadata:
+  name: vaultconnection-sample
+  namespace: tenant-1
+spec:
+  address: http://192.168.1.2:8200
+  skipTLSVerify: true
+---
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: vaultauth-sample
+  namespace: tenant-1
+spec:
+  vaultConnectionRef: vaultconnection-sample
+  method: kubernetes
+  mount: kubernetes
+  kubernetes:
+    role: instant-updates
+    serviceAccount: default
+---
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultStaticSecret
+metadata:
+  namespace: tenant-1
+  name: vaultstaticsecret-sample
+spec:
+  vaultAuthRef: vaultauth-sample
+  mount: kvv2
+  type: kv-v2
+  path: secret2
+  refreshAfter: 5m
+  destination:
+    name: secret2
+    overwrite: true
+    create: true
+  rolloutRestartTargets:
+  - kind: Deployment
+    name: vault-test
+  syncConfig:
+    instantUpdates: true
