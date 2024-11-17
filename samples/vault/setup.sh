@@ -97,7 +97,9 @@ vault write auth/kubernetes/role/devweb-app \
     ttl=1h
 
 for ns in tenant-{1,2} ; do
-    kubectl delete namespace --wait --timeout=30s "${ns}" &> /dev/null || true
+    kubectl delete namespace --wait --timeout=30s "${ns}" &> /dev/null || kubectl patch ns ${ns} -p '{"metadata": {"finalizers": null}}'
+
+    kubectl wait --for=delete ns/${ns} --timeout=1m
     kubectl create namespace "${ns}"
 done
 
