@@ -1,6 +1,0 @@
----
-collections:
-  - name: google.cloud
-  - name: kubernetes.core
-  - name: ansible.posix
-  - name: ansible.windows
