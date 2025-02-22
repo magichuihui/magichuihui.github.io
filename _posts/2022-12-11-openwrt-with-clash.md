@@ -207,6 +207,44 @@ nft add rule ip nat clash ip protocol tcp counter redirect to :7892
 iptables -t nat -A PREROUTING -p tcp -j clash
 ```
 
+Or you can use nft to replace iptables command:
+
+```bash
+cat > /etc/nftables.d/clash.nft <<'EOF'
+table ip nat {
+  chain clash {
+    # 排除私有地址和代理自身端口
+    ip daddr { 
+      0.0.0.0/8, 10.0.0.0/8, 127.0.0.0/8, 169.254.0.0/16,
+      172.16.0.0/12, 192.168.0.0/16, 224.0.0.0/4, 240.0.0.0/4 
+    } return
+
+    # 排除目标端口为 7892 的流量（防止循环）
+    tcp dport 7892 return
+    meta mark 0x1 return
+
+    # 重定向其他 TCP 流量到代理端口
+    ip protocol tcp redirect to :7892
+  }
+
+  chain PREROUTING {
+    type nat hook prerouting priority dstnat; policy accept;
+    meta l4proto tcp jump clash
+  }
+
+}
+
+table ip mangle {
+    chain OUTPUT {
+        type filter hook output priority mangle;
+        ip daddr != 127.0.0.1 meta skuid clash mark set 0x1
+    }
+}
+EOF
+
+nft -f /etc/nftables.d/clash.nft
+```
+
 重启路由器
 
 ```bash
