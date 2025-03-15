@@ -1,2 +1,9 @@
 _site/
 *.log
+
+# Terraform
+.terraform/
+
+terraform.tfstate
+terraform.tfstate.*
+.terraform.lock.hcl
