@@ -7,7 +7,7 @@ tags: [kubernetes]
 comments: true
 ---
 
-It's able to launch a debugging container for Kubernetes pod with `kubectl debug`, to get a terminal for debugging a running pod.
+It's able to launch a debugging container for Kubernetes pod with `kubectl debug`, to get a terminal for debugging a running pod, since kubectl v1.31.
 
 With `kubectl debug`, an ephemeral container will be attached to the running pod and not restart the pod, sharing the same pid and network namespace with that pod.
 
@@ -24,22 +24,37 @@ metadata:
   name: nginx-debug-pod
 spec:
   containers:
-  - image: nginx:1.23
+  - image: nginxinc/nginx-unprivileged:1.27
     imagePullPolicy: IfNotPresent
     name: nginx
     ports:
     - containerPort: 80
       protocol: TCP
-    resources: 
+    resources:
       limits:
         cpu: 100m
-        memory: 128Mi
+        memory: 100Mi
       requests:
         cpu: 100m
-        memory: 128Mi
+        memory: 100Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      runAsNonRoot: true
+      runAsUser: 1000
+    volumeMounts:
+    - mountPath: /data
+      name: test
   securityContext:
     seccompProfile:
       type: RuntimeDefault
+    runAsNonRoot: true
+    runAsUser: 1000
+  volumes:
+  - emptyDir: {}
+    name: test
 ```
 
 ## Create a custom profile
@@ -56,9 +71,10 @@ securityContext:
   runAsUser: 65533
   readOnlyRootFilesystem: true
   capabilities:
-    add:
-    - NET_ADMIN
-    - SYS_TIME
+    drop:
+    - ALL
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
 ```
 
 ## kubectl debug
@@ -66,7 +82,7 @@ securityContext:
 Using `kuebctl debug` to attach an ephemeral container to the running nginx pod.
 
 ```bash
-kubectl debug -it --image=centos:8 --profile=sysadmin --target=nginx --custom=custom-profile.yaml nginx-debug-pod
+kubectl debug -it --image=centos:8 --target=nginx --custom=custom-profile.yaml nginx-debug-pod
 ```
 
 Verify those custom attributes in the terminal.
@@ -77,15 +93,62 @@ uid=65533 gid=0(root) groups=0(root)
 
 bash-4.4$ ps aux
 USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-root           1  0.1  0.0   8936  5828 ?        Ss   14:27   0:00 nginx: master process nginx -g daemon 
-101           29  0.0  0.0   9324  2872 ?        S    14:27   0:00 nginx: worker process
-101           30  0.0  0.0   9324  2872 ?        S    14:27   0:00 nginx: worker process
-101           31  0.0  0.0   9324  2872 ?        S    14:27   0:00 nginx: worker process
-101           32  0.0  0.0   9324  2872 ?        S    14:27   0:00 nginx: worker process
-65533         33  0.0  0.0  35104  4324 pts/0    Ss   14:27   0:00 /bin/bash
-65533         40  0.0  0.0  47588  3868 pts/0    R+   14:28   0:00 ps aux
+1000           1  0.0  0.0  11452  7288 ?        Ss   11:28   0:00 nginx: master process nginx -g daemon off;
+1000          28  0.0  0.0  11912  2584 ?        S    11:28   0:00 nginx: worker process
+1000          29  0.0  0.0  11912  2448 ?        S    11:28   0:00 nginx: worker process
+1000          30  0.0  0.0  11912  2584 ?        S    11:28   0:00 nginx: worker process
+1000          31  0.0  0.0  11912  2452 ?        S    11:28   0:00 nginx: worker process
+65533         32  0.0  0.0  35104  4016 pts/0    Ss   12:25   0:00 /bin/bash
+65533         42  0.0  0.0  47588  3796 pts/0    R+   12:27   0:00 ps aux
 
 bash-4.4$ env | grep MY_VAR
 MY_VAR1=hello
 MY_VAR2=world
+```
+
+## Mount Volumes to your ephemeral container.
+
+Sometime you might need to mount the Volume to your ephemeral container for debugging purpose. For that kind of usage, you can always call the API of api-server directly to attach an ephemeral container with volumeMounts to your pods.
+
+```bash
+$ kubectl proxy
+$ curl http://localhost:8001/api/v1/namespaces/default/pods/nginx-debug-pod/ephemeralcontainers \
+  -X PATCH \
+  -H 'Content-Type: application/strategic-merge-patch+json' \
+  -d '
+{
+    "spec":
+    {
+        "ephemeralContainers":
+        [
+            {
+                "name": "debugger",
+                "command": ["sh"],
+                "image": "centos:8",
+                "targetContainerName": "nginx",
+                "env": [
+                  {"name": "MY_VAR1", "value": "hello"},
+                  {"name": "MY_VAR2", "value": "world"}
+                ],
+                "securityContext": {
+                  "runAsUser": 65533,
+                  "readOnlyRootFilesystem": true,
+                  "allowPrivilegeEscalation": false,
+                  "runAsNonRoot": true,
+                  "capabilities": {
+                    "drop": ["ALL"]
+                  }
+                },
+                "stdin": true,
+                "tty": true,
+                "volumeMounts": [{
+                    "mountPath": "/data",
+                    "name": "test",
+                    "readOnly": true
+                }]
+            }
+        ]
+    }
+}'
+$ kubectl -n default attach nginx-debug-pod -c debugger -ti
 ```
