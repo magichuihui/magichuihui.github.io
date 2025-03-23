@@ -21,9 +21,7 @@ author: magichuihui
 
 navbar-links:
   About Me: "aboutme"
-  Resources:
-    - Beautiful Jekyll: "https://beautifuljekyll.com"
-    - Learn markdown: "https://www.markdowntutorial.com/"
+  tags: "tags"
   Author's home: "https://blog.amyinfo.com"
 
 ################
