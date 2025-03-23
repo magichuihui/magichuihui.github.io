@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Use Terraform module to manage GCP Pub/Sub service
-excerpt: Create GCP Pub/Sub resources with terraform
+title: Export Helm Chart to kubernetes manifests
+excerpt: Split Helm template to separate files
 date: 2025-03-23
 tags: [kubernetes, helm]
 comments: true
