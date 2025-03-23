@@ -1,8 +1,6 @@
-source 'https://rubygems.org'
+# frozen_string_literal: true
 
-gem "jekyll"
-gem "jekyll-paginate"
-gem "support-for"
-gem "http_parser"
-gem "webrick", ">= 2.2.8"
- 
+source "https://rubygems.org"
+
+gemspec
+
