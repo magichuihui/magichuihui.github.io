@@ -49,12 +49,39 @@ dn: cn=Manager,dc=amyinfo,dc=com
 objectclass: organizationalRole
 objectclass: simpleSecurityObject
 cn: Manager
-userPassword: {SSHA}xxxxxxxxxxxxxxxxxxx
+userPassword: {SSHA}xxxxxxxxxxxxxxxxxxxxx
 
 dn: ou=devops,dc=amyinfo,dc=com
 objectclass: top
 objectclass: organizationalUnit
 ou: devops
+
+dn: ou=groups,dc=amyinfo,dc=com
+objectclass: top
+objectclass: organizationalUnit
+ou: groups
+
+dn: cn=developers,ou=groups,dc=amyinfo,dc=com
+memberUid: kyra
+memberUid: alice
+gidNumber: 1000
+objectClass: posixGroup
+objectClass: top
+cn: developers
+
+dn: cn=sre,ou=groups,dc=amyinfo,dc=com
+memberUid: kyra
+gidNumber: 1001
+objectClass: posixGroup
+objectClass: top
+cn: sre
+
+dn: cn=qa,ou=groups,dc=amyinfo,dc=com
+memberUid: alice
+gidNumber: 1002
+objectClass: posixGroup
+objectClass: top
+cn: qa
 ```
 
 Then, run ldapadd(1) to insert these entries into the directory.
@@ -83,8 +110,7 @@ gidNumber: 2000
 homeDirectory: /home/alice
 mail: alice@gmail.com
 telephonenumber: 13800138000
-userPassword: {SSHA}xxxxxxxxxxxxxxxxxx
-```
+userPassword: {SSHA}xxxxxxxxxxxxxxxxxxx
 
 Add this user to the LDAP server
 
@@ -96,4 +122,7 @@ Fetch information from `dc=amyinfo,dc=com`
 
 ```bash
 ldapsearch -x -W -D "cn=Manager,dc=amyinfo,dc=com" -H ldapi:/// -b "dc=amyinfo,dc=com"
+
+# Fetch groups of Alice
+ldapsearch -x -W -D "cn=Manager,dc=amyinfo,dc=com" -H ldapi:/// -b "ou=groups,dc=amyinfo,dc=com" "(&(objectClass=posixGroup) (memberUid=alice))"
 ```
