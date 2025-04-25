@@ -17,19 +17,26 @@ opkg update
 opkg install openldap-server openldap-utils
 ```
 
-By modifying the configuration file /etc/openldap/slapd.conf, using my own domain name as LDAP DN.
+By modifying the configuration file /etc/openldap/slapd.conf, using my own domain name as LDAP DN. Also use `slappasswd` to create an encrypted password for rootdn.
+
 
 ```conf
+...
+include         /etc/openldap/schema/core.schema
+include         /etc/openldap/schema/cosine.schema
+include         /etc/openldap/schema/inetorgperson.schema
+include         /etc/openldap/schema/nis.schema
 ...
 database        mdb                                                    
 maxsize         8388608                          
 suffix          "dc=amyinfo,dc=com"                                    
-rootdn          "cn=Manager,dc=amyinfo,dc=com"     
+rootdn          "cn=admin,dc=amyinfo,dc=com"
+rootpw          {SSHA}46xxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 # Add the admin role for my orgnazation
 
-Create an LDIF file that includes the organization and manager.
+Create a LDIF file named `start.ldif` that includes the organization and manager.
 
 ```
 dn: dc=amyinfo,dc=com
@@ -40,13 +47,20 @@ dc: amyinfo
 
 dn: cn=Manager,dc=amyinfo,dc=com
 objectclass: organizationalRole
+objectclass: simpleSecurityObject
 cn: Manager
+userPassword: {SSHA}xxxxxxxxxxxxxxxxxxx
+
+dn: ou=devops,dc=amyinfo,dc=com
+objectclass: top
+objectclass: organizationalUnit
+ou: devops
 ```
 
 Then, run ldapadd(1) to insert these entries into the directory.
 
 ```bash
-ldapadd -x -H ldapi:/// -D "cn=Manager,dc=amyinfo,dc=com" -W -f manager.ldif
+ldapadd -x -H ldapi:/// -D "cn=admin,dc=amyinfo,dc=com" -W -f start.ldif
 ```
 
 # Create a user for testing purpose
@@ -54,19 +68,32 @@ ldapadd -x -H ldapi:/// -D "cn=Manager,dc=amyinfo,dc=com" -W -f manager.ldif
 Use `slappasswd` to create the password.
 
 ```
-dn: cn=Alice,dc=amyinfo,dc=com
-changetype: add
+dn: uid=alice,ou=devops,dc=amyinfo,dc=com
+objectClass: inetOrgPerson
 objectClass: person
-objectClass: organizationalPerson
+objectClass: posixAccount
 objectClass: top
-cn: Alice
-sn: Alice
-ou: SRE
-userPassword: {SSHA}xxxxxxxxxxxxxxxxxxx
+uid: alice
+cn: alice
+sn: alice
+displayName: Alice
+loginShell: /bin/bash
+uidNumber: 2000
+gidNumber: 2000
+homeDirectory: /home/alice
+mail: alice@gmail.com
+telephonenumber: 13800138000
+userPassword: {SSHA}xxxxxxxxxxxxxxxxxx
 ```
 
 Add this user to the LDAP server
 
 ```bash
-ldapadd -x -H ldapi:/// -D "cn=Manager,dc=amyinfo,dc=com" -vvvv -W -f alice.ldif
+ldapadd -x -H ldapi:/// -D "cn=admin,dc=amyinfo,dc=com" -vvvv -W -f alice.ldif
+```
+
+Fetch information from `dc=amyinfo,dc=com`
+
+```bash
+ldapsearch -x -W -D "cn=Manager,dc=amyinfo,dc=com" -H ldapi:/// -b "dc=amyinfo,dc=com"
 ```
