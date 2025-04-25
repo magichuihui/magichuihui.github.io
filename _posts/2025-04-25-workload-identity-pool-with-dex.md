@@ -27,7 +27,7 @@ Dex need a User database as its backend, you can refer to [this page](https://bl
 
 Just make some changes to the configuration of Dex, to use openldap as a connector.
 
-Assume that you have the Domain `dex.amyinfo.com` for the Dex server, this domain don't need to be public accessible if you upload your `jwks.json` file to workload identity provider.
+Assume that you have the Domain `dex.example.com` for the Dex server, this domain don't need to be public accessible if you upload your `jwks.json` file to workload identity provider.
 
 ```yaml
 kind: ConfigMap
@@ -37,7 +37,7 @@ metadata:
   namespace: dex
 data:
   config.yaml: |
-    issuer: https://dex.amyinfo.com
+    issuer: https://dex.example.com
     storage:
       type: kubernetes
       config:
@@ -51,18 +51,18 @@ data:
       config:
         host: 192.168.1.1:389
         insecureNoSSL: true
-        bindDN: cn=admin,dc=amyinfo,dc=com
+        bindDN: cn=admin,dc=example,dc=com
         bindPW: <DN password>
         usernamePrompt: SSO Username
         userSearch:
-          baseDN: ou=devops,dc=amyinfo,dc=com
+          baseDN: ou=devops,dc=example,dc=com
           filter: "(objectClass=posixAccount)"
           username: uid
           idAttr: DN
           emailAttr: mail
           nameAttr: sn
         groupSearch:
-          baseDN: ou=groups,dc=amyinfo,dc=com
+          baseDN: ou=groups,dc=example,dc=com
           filter: "(objectClass=posixGroup)"
           userMatchers:
           - userAttr: uid
@@ -90,7 +90,7 @@ data:
 Test Dex is ready:
 
 ```bash
-curl -s https://dex.amyinfo.com/.well-known/openid-configuration
+curl -s https://dex.example.com/.well-known/openid-configuration
 ```
 
 ## 2. Setup workload identity federation on GCP
@@ -100,7 +100,7 @@ curl -s https://dex.amyinfo.com/.well-known/openid-configuration
 Retrieve jwks file from Dex:
 
 ```bash
-curl -L -o jwks.json https://dex.amyinfo.com/keys
+curl -L -o jwks.json https://dex.example.com/keys
 ```
 
 Create workload identity with gcloud
@@ -110,7 +110,7 @@ gcloud iam workload-identity-pools create test --location="global" \
     --description="Access gcp with Dex" --display-name=test
 
 gcloud iam workload-identity-pools providers create-oidc dex --location="global" \
-    --workload-identity-pool=test --issuer-uri="https://dex.amyinfo.com" \
+    --workload-identity-pool=test --issuer-uri="https://dex.example.com" \
     --attribute-mapping="google.subject=assertion.sub,google.groups=assertion.groups" \
     --jwk-json-path="cluster-jwks.json"
 ```
@@ -160,7 +160,7 @@ The workload identity pool is ready now, you just need to use the ID token from 
 Use your ldap user to get a ID token from the Dex API, and store the token to `/path/to/id/token`
 
 ```bash
-DEX_HOST="https://dex.amyinfo.com"
+DEX_HOST="https://dex.example.com"
 OIDC_CONFIG=$(curl -s $DEX_HOST/.well-known/openid-configuration)
 TOKEN_ENDPOINT=$(echo $OIDC_CONFIG | jq -r .token_endpoint)
 
@@ -239,3 +239,9 @@ curl -H "Authorization: Bearer $(echo "$ACCESS_TOKEN_RESPONSE" | jq -r '.accessT
 
 
 Ok, That's all.
+
+## 4. References
+
+1. [dex - A federated OpenID Connect provider](https://github.com/dexidp/dex)
+2. [Configure Workload Identity Federation with Kubernetes](https://cloud.google.com/iam/docs/workload-identity-federation-with-kubernetes)
+3. [Dex Authentication Through LDAP](https://dexidp.io/docs/connectors/ldap/)
