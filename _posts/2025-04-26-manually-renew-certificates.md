@@ -33,7 +33,7 @@ kubectl patch certificate <your cert> --type json -p '[{"op": "remove", "path": 
 
 ## 3. Use `curl` to call apiserver
 
-If you want to renew your certs in a pod, you must make sure the service account has the permission to patch certificates. Or you can use kubernetes-admin in the kubeconfig.
+If you want to renew your certs in a pod, you must make sure the service account has the permission to patch certificates. Or you can just use kubernetes-admin in the kubeconfig.
 
 ```bash
 NAMESPACE=your-namespace
@@ -46,8 +46,8 @@ kubectl config view --minify --raw -o jsonpath='{.users[0].user.client-key-data}
 # Get CA
 kubectl config view --minify --raw -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' | base64 -d > ca.crt
 
-NAMESPACE="<证书所在命名空间>"
-CERT_NAME="<证书名称>"
+NAMESPACE="<namespace>"
+CERT_NAME="<cert-name>"
 
 curl -X PATCH \
   --cert "$CLIENT_CERT" \
@@ -57,6 +57,8 @@ curl -X PATCH \
   -d '[{"op": "replace", "path": "/spec/renewBefore", "value": "1440h"}]'
   "$APISERVER/apis/cert-manager.io/v1/namespaces/$NAMESPACE/certificates/$CERT_NAME"
 ```
+
+After the certs get renewed, use curl to remove the `renewBefore` field.
 
 ## References
 
