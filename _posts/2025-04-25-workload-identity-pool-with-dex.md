@@ -3,6 +3,7 @@ layout: post
 title: Configure GCP workload identity federation with Dex server
 excerpt: Using Dex as OIDC provider for workload identity pool
 date: 2025-04-25
+mermaid: true
 tags: [kubernetes, gcloud]
 comments: true
 ---
