@@ -4,6 +4,7 @@ title: Configure GCP workload identity federation with Dex server
 excerpt: Using Dex as OIDC provider for workload identity pool
 date: 2025-04-25
 mermaid: true
+full-width: true
 tags: [kubernetes, gcloud]
 comments: true
 ---
@@ -27,7 +28,6 @@ sequenceDiagram
 autonumber
 actor client as Client of curl or gcloud
 participant dex as Dex Server
-link dex: github @ https://github.com/dexidp/dex
 participant sts as GCP Secure Token Service
 participant impersonation as GCP Impersonation API
 participant compute as GCP Compute Engine API
