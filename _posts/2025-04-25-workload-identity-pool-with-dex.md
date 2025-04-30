@@ -9,9 +9,30 @@ comments: true
 
 This guide describes how to use Workload Identity Federation with [Dex](https://github.com/dexidp/dex).
 
-    To authenticate to Google Cloud, you can let the workload exchange its environment-specific credentials for short-lived Google Cloud credentials by using Workload Identity Federation.
+  To authenticate to Google Cloud, you can let the workload exchange its environment-specific credentials for short-lived Google Cloud credentials by using Workload Identity Federation.
 
-So you don't need to maintain the GCP service account key in your local environment forever.
+So you don't need to maintain the GCP service account key in your local environment forever. 
+
+The below figure describe the successful workflow:
+
+```mermaid
+sequenceDiagram
+autonumber
+actor client as Client of curl or gcloud
+participant dex as Dex Server
+participant sts as GCP Secure Token Service
+participant impersonation as GCP impersonation API
+participant compute as GCP compute engine API
+client->>dex: Fetch the ID Token from Dex
+dex-->>client: Respond with ID Token
+client->>sts: Exchange for federated access token
+sts-->>client: Return with federated access token
+client->>impersonation: Obtain the access token of GCP service account
+impersonation-->>client: Return the final access token
+client->>compute: Fetch the list of compute instances
+compute-->>client: List of compute instances
+```
+
 
 ## 1. Dex
 
