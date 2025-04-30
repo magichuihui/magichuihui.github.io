@@ -17,21 +17,38 @@ So you don't need to maintain the GCP service account key in your local environm
 The below figure describe the successful workflow:
 
 ```mermaid
+---
+config:
+  theme: neutral
+title: Workflow of GCP Workload Identity Pool
+---
 sequenceDiagram
 autonumber
 actor client as Client of curl or gcloud
 participant dex as Dex Server
 participant sts as GCP Secure Token Service
-participant impersonation as GCP impersonation API
-participant compute as GCP compute engine API
-client->>dex: Fetch the ID Token from Dex
-dex-->>client: Respond with ID Token
-client->>sts: Exchange for federated access token
-sts-->>client: Return with federated access token
-client->>impersonation: Obtain the access token of GCP service account
-impersonation-->>client: Return the final access token
+participant impersonation as GCP Impersonation API
+participant compute as GCP Compute Engine API
+
+rect rgba(135, 206, 250, 0.1)
+    client->>dex: Fetch the ID Token from Dex
+    dex-->>client: Respond with ID Token
+end
+
+rect rgba(255, 182, 193, 0.1)
+    client->>sts: Exchange for federated access token
+    sts-->>client: Return with federated access token
+end
+
+rect rgba(144, 238, 144, 0.1)
+    client->>impersonation: Obtain the access token of GCP service account
+    impersonation-->>client: Return the final access token
+end
+
 client->>compute: Fetch the list of compute instances
 compute-->>client: List of compute instances
+
+Note right of client: This diagram shows the<br/>interaction between the client<br/>and the API of GCP services<br/> via workload identity pool.
 ```
 
 
