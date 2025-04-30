@@ -28,7 +28,6 @@ sequenceDiagram
 autonumber
 actor client as Client of curl or gcloud
 participant dex as Dex Server
-link dex: github @ https://github.com/dexidp/dex
 participant sts as GCP Secure Token Service
 participant impersonation as GCP Impersonation API
 participant compute as GCP Compute Engine API
