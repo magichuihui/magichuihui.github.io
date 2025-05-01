@@ -6,8 +6,8 @@ on:
   schedule:
     - cron: "0 4 * * *" # run once a day at 4 AM
 jobs:
-  scan:
-    name: gitleaks
+  security-scan:
+    name: Gitleaks security scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,3 +16,5 @@ jobs:
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          fail_on_error: true
