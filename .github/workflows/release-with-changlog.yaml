@@ -30,10 +30,10 @@ jobs:
         
         if [ -z "$PREV_TAG" ]; then
           # If no previous tag is found, get all merged PRs to main
-          PR_QUERY="base:main is:merged"
+          PR_QUERY="base:master base:main is:merged"
         else
           # Get PRs merged after the previous tag
-          PR_QUERY="base:main is:merged merged:>$PREV_TAG"
+          PR_QUERY="base:master base:main is:merged merged:>$PREV_TAG"
         fi
         
         # List PRs using GitHub CLI
