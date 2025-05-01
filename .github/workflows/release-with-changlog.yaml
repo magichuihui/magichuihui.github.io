@@ -1,0 +1,63 @@
+name: Generate Release with PR Changelog
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  generate-changelog:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Get PRs between releases
+      id: get-prs
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Get the current release tag
+        CURRENT_TAG=${{ github.ref_name }}
+        
+        # Get the previous release tag
+        PREV_TAG=$(git describe --tags --abbrev=0 "$CURRENT_TAG^" 2>/dev/null || echo "")
+        
+        if [ -z "$PREV_TAG" ]; then
+          # If no previous tag is found, get all merged PRs to main
+          PR_QUERY="base:main is:merged"
+        else
+          # Get PRs merged after the previous tag
+          PR_QUERY="base:main is:merged merged:>$PREV_TAG"
+        fi
+        
+        # List PRs using GitHub CLI
+        PR_LIST=$(gh pr list --search "$PR_QUERY" --json number,title,url,author --template '{{range .}}- #{{.number}} {{.title}} by @{{.author.login}} ({{.url}})\n{{end}}')
+        
+        # format the Changelog message
+        CHANGELOG="## Changelog\n\n$PR_LIST"
+        echo "CHANGELOG<<EOF" >> $GITHUB_ENV
+        echo "$CHANGELOG" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+
+    - name: Update Release body with PR Changelog
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { data: release } = await github.rest.repos.getReleaseByTag({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            tag: "${{ github.ref_name }}"
+          });
+          
+          await github.rest.repos.updateRelease({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            release_id: release.id,
+            body: `${{ env.CHANGELOG }}\n\n${release.body || ''}`
+          });
