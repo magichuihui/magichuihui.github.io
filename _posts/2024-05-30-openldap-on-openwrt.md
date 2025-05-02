@@ -17,7 +17,7 @@ opkg update
 opkg install openldap-server openldap-utils
 ```
 
-By modifying the configuration file /etc/openldap/slapd.conf, using my own domain name as LDAP DN. Also use `slappasswd` to create an encrypted password for rootdn.
+By modifying the configuration file /etc/openldap/slapd.conf, using my own domain name as LDAP DN. And I have create new ACL policies to allow importing ldif files via ldapi unix socket in the router without requiring password for rootdn. Also use `slappasswd` to create an encrypted password for rootdn.
 
 
 ```conf
@@ -26,6 +26,24 @@ include         /etc/openldap/schema/core.schema
 include         /etc/openldap/schema/cosine.schema
 include         /etc/openldap/schema/inetorgperson.schema
 include         /etc/openldap/schema/nis.schema
+
+access to * 
+    by dn.exact="gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth" manage
+    by * break
+
+access to attrs=userPassword,shadowLastChange
+    by self write
+    by dn="cn=admin,dc=amyinfo,dc=com" write
+    by dn="cn=Manager,dc=amyinfo,dc=com" write
+    by anonymous auth 
+    by * none
+
+access to * 
+    by self read
+    by dn="cn=admin,dc=amyinfo,dc=com" write
+    by dn="cn=Manager,dc=amyinfo,dc=com" write
+    by * none
+
 ...
 database        mdb                                                    
 maxsize         8388608                          
