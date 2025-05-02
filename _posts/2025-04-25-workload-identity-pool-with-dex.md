@@ -135,7 +135,7 @@ curl -s https://dex.example.com/.well-known/openid-configuration
 
 ### 1.3 Manage those LDAP accounts with Vault
 
-Manage and rotate the LDAP accounts in Hashicorp Vault
+Manage and rotate the LDAP accounts in Hashicorp Vault [[1](https://blog.amyinfo.com/2025-05-02-vault-ldap-secret-engine/)]
 
 ```mermaid
 C4Dynamic
