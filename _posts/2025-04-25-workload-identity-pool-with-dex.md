@@ -142,26 +142,28 @@ C4Dynamic
 title Manage LDAP service account by Vault
 UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
 
-Container_Boundary(a, "Internal Database") {
-    ContainerDb(c4, "LDAP", "Active Directory", "Stores user information, including the service accounts")
-    System(c1, "Vault", "The vault server", "Store and rotate service account")
-}
-
 Container_Boundary(b, "Google Cloud platform") {
     ContainerDb(c5, "GCP services", "Google API", "Our Google projects")
 }
+
 
 Container_Boundary(c, "Clients and applications") {
     Person(p1, "User", "", "Create service account in LDAP")
     Component(c2, "Ansible and other systems", "", "Use LDAP service account for authentication")
 }
 
+Container_Boundary(a, "Internal Database") {
+    ContainerDb(c4, "LDAP", "Active Directory", "Stores user information, including the service accounts")
+    System(c1, "Vault", "The vault server", "Store and rotate service account")
+}
+
+
 Rel(p1, c4, "Create a service acount")
 Rel(c1, c4, "Use AD as Secret engine")
-Rel(c1, c2, "Retrieve service account info from Vault")
+Rel(c2, c1, "Retrieve service account info from Vault")
 Rel(c2, c5, "Authenticate with Google cloud platform <br/>with service account")
 
-UpdateRelStyle(p1, c4, $offsetY="220", $offsetX="-80")
+UpdateRelStyle(p1, c4, $offsetX="10")
 UpdateRelStyle(c1, c4, $textColor="blue", $offsetY="-20", $offsetX="-40")
 UpdateRelStyle(c1, c2, $offsetY="-30", $offsetX="-60")
 UpdateRelStyle(c2, c5, $offsetY="-50", $offsetX="-120")
