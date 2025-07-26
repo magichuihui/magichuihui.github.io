@@ -16,7 +16,8 @@ jobs:
       - name: Update GitHub Release Notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.event.release.tag_name }}
         run: |
-          gh release edit "$GITHUB_REF_NAME" \
+          gh release edit "${{ env.TAG_NAME }}" \
             --generate-notes \
             --repo "$GITHUB_REPOSITORY"
