@@ -13,11 +13,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Update GitHub Release Notes
+      - name: Generate release notes with GitHub API
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG_NAME: ${{ github.event.release.tag_name }}
+          REPO: ${{ github.repository }}
         run: |
-          gh release edit "${{ env.TAG_NAME }}" \
-            --generate-notes \
-            --repo "$GITHUB_REPOSITORY"
+          NOTES=$(gh api repos/$REPO/releases/generate-notes -f tag_name="$TAG_NAME" | jq -r .body)
+          gh release edit "$TAG_NAME" --notes "$NOTES" --repo "$REPO"
