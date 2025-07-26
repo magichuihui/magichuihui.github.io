@@ -1,24 +1,13 @@
 version: 2
 project_name: github-pages
 
-builds: []  # No Go builds needed
+builds:
+  - skip: true
 
-archives:
-  - formats: ["tar.gz"]
-    meta: true
-    name_template: "github-pages-{{ .Version }}"
-    files:
-      - LICENSE
-      - _includes/*
-      - _layouts/*
-      - _posts/*
-      - _assets/*
-      - images/*
-      - "*.html"
-      - "*.yml"
-      - CNAME
-      - Gemfile
-
+source:
+  enabled: true
+  format: "tar.gz"
+  name_template: "github-pages-{{ .Version }}"
 
 changelog:
   use: github
