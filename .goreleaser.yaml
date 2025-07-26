@@ -4,19 +4,26 @@ project_name: github-pages
 builds: []  # No Go builds needed
 
 archives:
-  - format: tar.gz
+  - formats: ["tar.gz"]
+    meta: true
     name_template: "github-pages-{{ .Version }}"
     files:
-      - "**/*"
-    excludes:
-      - ".git/**"
-      - ".github/**"
-      - ".gitignore"
-      - "*.tar.gz"
+      - LICENSE
+      - _includes/*
+      - _layouts/*
+      - _posts/*
+      - _assets/*
+      - images/*
+      - "*.html"
+      - "*.yml"
+      - CNAME
+      - Gemfile
+
+
+changelog:
+  use: github
 
 release:
-  changelog:
-    use: github
   github:
     owner: magichuihui
     name: magichuihui.github.io
