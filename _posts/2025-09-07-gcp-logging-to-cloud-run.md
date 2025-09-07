@@ -73,13 +73,13 @@ graph TD
 
 ## Step 1: Configure Logging Export
 
-1. Create Pub/Sub topic
+1.1 Create Pub/Sub topic
 
 ```bash
 gcloud pubsub topics create mig-event-topic
 ```
 
-2. Create a Log Sink in Cloud Logging:
+1.2 Create a Log Sink in Cloud Logging:
 
 ```bash
 gcloud logging sinks create mig-event-sink \
@@ -93,7 +93,7 @@ Ensure GCP logging Service Account(eg, service-xxxxxxx@gcp-sa-logging.iam.gservi
 
 In your working directory, you need to create the below 3 files:
 
-1. **main.py**:
+2.1 **main.py**:
 
 ```python
 import os
@@ -132,7 +132,7 @@ def notify():
     return "OK", 200
 ```
 
-2. **Dockerfile**:
+2.2 **Dockerfile**:
 
 ```Dockerfile
 FROM python:3.11-slim
@@ -143,7 +143,7 @@ COPY main.py .
 CMD ["gunicorn", "-b", ":8080", "main:app"]
 ```
 
-3. **requirements.txt**:
+2.3 **requirements.txt**:
 
 ```txt
 flask
@@ -151,7 +151,7 @@ requests
 gunicorn
 ```
 
-4. Create the cloud run service
+2.4 Create the cloud run service
 
 ```bash
 gcloud run deploy mig-event-handler \
@@ -163,7 +163,7 @@ gcloud run deploy mig-event-handler \
 
 ## Step 3: Use subscription to push message to Cloud Run
 
-1. First, create a SA to trigger Clour Run
+3.1 First, create a SA to trigger Clour Run
 
 ```bash
 
@@ -176,7 +176,7 @@ gcloud run services add-iam-policy-binding mig-event-handler \
   --region=us-central1
 ```
 
-2. Create a subscription to push message
+3.2 Create a subscription to push message
 
 ```bash
 gcloud pubsub subscriptions create mig-event-sub \
