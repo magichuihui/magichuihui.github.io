@@ -4,6 +4,7 @@ title: Building a Serverless Alerting Pipeline on GCP with Cloud RUN
 excerpt: From VM/MIG Events to Slack Notifications
 date: 2025-09-07
 tags: [gcloud]
+mermaid: true
 comments: true
 ---
 
