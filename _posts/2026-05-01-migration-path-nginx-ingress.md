@@ -81,21 +81,21 @@ graph TD
     end
 
     %% Path 1: Legacy Path
-    C -- "1. api-gateway.example.com" --> ILB_Old
-    ILB_Old -- "2. Forward" --> MIG
-    MIG -- "3. Proxy" --> NGX
-    NGX -- "4. Route" --> APP
+    C -- "1\. api-gateway.example.com" --> ILB_Old
+    ILB_Old -- "2\. Forward" --> MIG
+    MIG -- "3\. Proxy" --> NGX
+    NGX -- "4\. Route" --> APP
 
     %% Path 2: Shared VPC PSC Path
-    C -. "1. api-gateway.example.com" .-> PSC_EP
-    PSC_EP == "2. PSC Tunnel" ==> SA
+    C -. "1\. api-gateway.example.com" .-> PSC_EP
+    PSC_EP == "2\. PSC Tunnel" ==> SA
 
     %% Path 3: Cross-Project PSC Path
     C_PSC == "Direct Project-to-Project Access" ==> SA
 
     %% Internal Routing
     SA ==> IST
-    IST -. "4. Gateway API / VirtualService" .-> APP
+    IST -. "4\. Gateway API / VirtualService" .-> APP
 
     %% Styling
     style Legacy_Stack fill:#fff1f0,stroke:#cf1322,stroke-width:2px,stroke-dasharray: 5 5
