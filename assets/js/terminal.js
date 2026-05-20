@@ -1,120 +1,106 @@
 (function () {
   'use strict';
 
+  /* ===== STATE ===== */
   var term = {
     screen: null,
     input: null,
+    overlay: null,
+    returnBtn: null,
     history: [],
     historyIndex: -1,
     commands: {},
-    buffer: [],
     booting: true,
-    posts: []
+    posts: [],
+    tags: [],
+    site: {},
+    exitBtn: null
   };
 
+  /* ===== DATA ===== */
   var ASCII_BANNER = [
-    '%cpurple%  ██╗  ██╗██╗   ██╗██████╗  █████╗ ',
-    '%cpurple%  ██║ ██╔╝╚██╗ ██╔╝██╔══██╗██╔══██╗',
-    '%cpurple%  █████╔╝  ╚████╔╝ ██████╔╝███████║',
-    '%cpurple%  ██╔═██╗   ╚██╔╝  ██╔══██╗██╔══██║',
-    '%cpurple%  ██║  ██╗   ██║   ██║  ██║██║  ██║',
-    '%cpurple%  ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝',
+    '  ██╗  ██╗██╗   ██╗██████╗  █████╗ ',
+    '  ██║ ██╔╝╚██╗ ██╔╝██╔══██╗██╔══██╗',
+    '  █████╔╝  ╚████╔╝ ██████╔╝███████║',
+    '  ██╔═██╗   ╚██╔╝  ██╔══██╗██╔══██║',
+    '  ██║  ██╗   ██║   ██║  ██║██║  ██║',
+    '  ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝',
     ''
   ];
 
-  var BOOT_MESSAGES = [
-    { text: ' Booting KyraOS v1.0.0 ...', cls: 'boot-ok' },
-    { text: ' [  OK  ] Loaded kernel module: kyra_core', cls: 'boot-ok' },
-    { text: ' [  OK  ] Initialized networking stack', cls: 'boot-ok' },
-    { text: ' [  OK  ] Mounted /home filesystem', cls: 'boot-ok' },
-    { text: ' [  OK  ] Started blog engine (Jekyll)', cls: 'boot-ok' },
-    { text: ' [  OK  ] Loaded ' + (window._terminalPosts ? window._terminalPosts.length : 0) + ' blog posts', cls: 'boot-ok' },
-    { text: ' [  OK  ] Ready on port 443', cls: 'boot-ok' },
-    { text: '', cls: '' }
+  var UPTIME_JOKES = [
+    'up ' + Math.floor(Math.random() * 365 + 1) + ' days, ' + Math.floor(Math.random() * 24) + ' hours',
+    'up ' + Math.floor(Math.random() * 99 + 1) + ' days - panics: 0, caffeine: ' + Math.floor(Math.random() * 42 + 1),
+    'up way too long, should probably reboot soon'
   ];
 
   var SKILLS = [
     { key: 'Kubernetes', value: 'Cluster ops, Helm, Istio, Calico, ArgoCD' },
-    { key: 'CI/CD', value: 'GitHub Actions, GitLab CI, ArgoCD, Jenkins' },
+    { key: 'CI/CD', value: 'GitHub Actions, GitLab CI, ArgoCD' },
     { key: 'Infra as Code', value: 'Terraform, Helm, Ansible' },
-    { key: 'Security', value: 'Vault, Let\'s Encrypt, mTLS, OIDC' },
+    { key: 'Security', value: 'Vault, Lets Encrypt, mTLS, OIDC' },
     { key: 'Networking', value: 'OpenWRT, Calico, BGP, nftables' },
     { key: 'Storage', value: 'Ceph, Rook, Longhorn' },
     { key: 'Observability', value: 'Elasticsearch, Prometheus, Grafana' },
     { key: 'Languages', value: 'Go, Python, Bash, Lua' }
   ];
 
-  var CONTACT = [
-    { key: 'GitHub', value: 'github.com/magichuihui' },
-    { key: 'Blog', value: 'blog.amyinfo.com' }
-  ];
-
-  var ABOUT_TEXT = [
-    'Infrastructure & Platform Engineer. I write about Kubernetes,',
-    'cloud-native technologies, networking, and infrastructure automation.',
-    '',
-    'This site is a collection of notes, guides, and hard-won lessons',
-    'from running production systems.'
-  ];
-
-  var WHOAMI_TEXT = [
-    'Login: magichuihui',
-    'Name: Kyra',
-    'Shell: /bin/bash',
-    'Home: /home/kyra',
-    'Site: blog.amyinfo.com',
-    'Uptime: varies',
-    'VM: walking on clouds (and bare metal)'
-  ];
-
-  var UPTIME_JOKES = [
-    'up ' + Math.floor(Math.random() * 365 + 1) + ' days, ' + Math.floor(Math.random() * 24) + ' hours (since last existential crisis)',
-    'up ' + Math.floor(Math.random() * 99 + 1) + ' days — kernel panics: 0, caffeine crashes: ' + Math.floor(Math.random() * 42 + 1),
-    'up way too long, should probably reboot soon (famous last words)'
-  ];
-
+  /* ===== INIT ===== */
   function init() {
+    term.overlay = document.getElementById('terminal-overlay');
     term.screen = document.getElementById('terminal-screen');
     term.input = document.getElementById('terminal-input');
+    term.exitBtn = document.getElementById('terminal-exit-btn');
+    term.returnBtn = document.getElementById('terminal-return-btn');
     term.posts = window._terminalPosts || [];
+    term.tags = window._terminalTags || [];
+    term.site = window._terminalSite || {};
 
     registerCommands();
     bindEvents();
     bootSequence();
   }
 
+  /* ===== COMMAND SYSTEM ===== */
   function registerCommands() {
-    addCommand('help', cmdHelp, 'Show this help message');
-    addCommand('ls', cmdPosts, 'List recent blog posts');
-    addCommand('posts', cmdPosts, 'Alias for ls');
-    addCommand('about', cmdAbout, 'About this site');
-    addCommand('skills', cmdSkills, 'Show tech stack');
-    addCommand('whoami', cmdWhoami, 'Display user info');
-    addCommand('neofetch', cmdNeofetch, 'Display system info');
-    addCommand('contact', cmdContact, 'Show contact info');
-    addCommand('banner', cmdBanner, 'Display the startup banner');
-    addCommand('clear', cmdClear, 'Clear the terminal');
-    addCommand('date', cmdDate, 'Show current date/time');
-    addCommand('uptime', cmdUptime, 'Show system uptime');
-    addCommand('history', cmdHistory, 'Show command history');
-    addCommand('github', cmdGithub, 'Open GitHub profile');
-    addCommand('repo', cmdRepo, 'Open site source code');
-    addCommand('echo', cmdEcho, 'Echo the input text');
-    addCommand('uname', cmdUname, 'Print system information');
+    addCommand('help',     cmdHelp,    'Show this help message');
+    addCommand('ls',       cmdLs,      'List blog posts (use -l for detail, -a for all)');
+    addCommand('cat',      cmdCat,     'Read a post: cat <number> or cat <title>');
+    addCommand('open',     cmdCat,     'Alias for cat');
+    addCommand('search',   cmdSearch,  'Search blog posts: search <query>');
+    addCommand('tags',     cmdTags,    'List all tags');
+    addCommand('tag',      cmdTag,     'Show posts by tag: tag <name>');
+    addCommand('about',    cmdAbout,   'About this site');
+    addCommand('skills',   cmdSkills,  'Show tech stack');
+    addCommand('whoami',   cmdWhoami,  'Display user info');
+    addCommand('neofetch', cmdNeofetch,'Display system info');
+    addCommand('contact',  cmdContact, 'Show contact info');
+    addCommand('social',   cmdSocial,  'Show social media links');
+    addCommand('github',   cmdGithub,  'Open GitHub profile');
+    addCommand('repo',     cmdRepo,    'Open site source code');
+    addCommand('date',     cmdDate,    'Show current date/time');
+    addCommand('uptime',   cmdUptime,  'Show system uptime');
+    addCommand('history',  cmdHistory, 'Show command history');
+    addCommand('echo',     cmdEcho,    'Echo text: echo <message>');
+    addCommand('uname',    cmdUname,   'Print system information');
+    addCommand('clear',    cmdClear,   'Clear the terminal');
+    addCommand('banner',   cmdBanner,  'Display the startup banner');
+    addCommand('exit',     cmdExit,    'Switch to normal page view');
+    addCommand('help',     cmdHelp,    'Show this help message');
+    addCommand('man',      cmdHelp,    'Alias for help');
   }
 
-  function addCommand(name, fn, description) {
-    term.commands[name] = { fn: fn, desc: description };
+  function addCommand(name, fn, desc) {
+    term.commands[name] = { fn: fn, desc: desc };
   }
 
+  /* ===== EVENTS ===== */
   function bindEvents() {
     term.input.addEventListener('keydown', function (e) {
       if (term.booting) return;
-
       if (e.key === 'Enter') {
         e.preventDefault();
-        var cmd = term.input.value.trim();
-        processCommand(cmd);
+        processCommand(term.input.value.trim());
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         navigateHistory(-1);
@@ -130,109 +116,112 @@
     term.screen.addEventListener('click', function () {
       if (!term.booting) term.input.focus();
     });
+
+    term.exitBtn.addEventListener('click', function () {
+      if (!term.booting) exitToNormal();
+    });
+
+    term.returnBtn.addEventListener('click', function () {
+      enterTerminalMode();
+    });
   }
 
+  /* ===== BOOT SEQUENCE ===== */
   function bootSequence() {
     term.booting = true;
     term.input.disabled = true;
-    var inputLine = document.getElementById('terminal-input-line');
-    if (inputLine) inputLine.style.display = 'none';
+    hideEl('terminal-input-line');
+    document.body.style.overflow = 'hidden';
 
     var lines = [];
-
-    // Boot messages
-    BOOT_MESSAGES.forEach(function (msg) {
-      lines.push({ text: msg.text, cls: msg.cls, delay: 60 });
-    });
-
-    // ASCII banner
-    ASCII_BANNER.forEach(function (line) {
-      lines.push({ text: line, cls: 'ascii', delay: 20 });
-    });
-
-    // Welcome line
-    lines.push({ text: 'Welcome to Kyra\'s home — blog.amyinfo.com', cls: 'green bold', delay: 80 });
-    lines.push({ text: 'Type \'help\' for available commands.', cls: 'dim', delay: 60 });
-    lines.push({ text: '', cls: '', delay: 40 });
+    lines.push({ text: ' Booting KyraOS v1.0.0 ...',                   cls: 'boot-ok', delay: 50 });
+    lines.push({ text: ' [  OK  ] Loaded kernel module: kyra_core',      cls: 'boot-ok', delay: 40 });
+    lines.push({ text: ' [  OK  ] Initialized networking stack',         cls: 'boot-ok', delay: 40 });
+    lines.push({ text: ' [  OK  ] Mounted /home filesystem',             cls: 'boot-ok', delay: 40 });
+    lines.push({ text: ' [  OK  ] Started blog engine (Jekyll)',         cls: 'boot-ok', delay: 40 });
+    lines.push({ text: ' [  OK  ] Loaded ' + term.posts.length + ' blog posts', cls: 'boot-ok', delay: 40 });
+    lines.push({ text: ' [  OK  ] Loaded ' + term.tags.length + ' unique tags', cls: 'boot-ok', delay: 40 });
+    lines.push({ text: ' [  OK  ] Ready on port 443',                    cls: 'boot-ok', delay: 50 });
+    lines.push({ text: '', cls: '', delay: 30 });
+    ASCII_BANNER.forEach(function (l) { lines.push({ text: l, cls: 'ascii', delay: 15 }); });
+    lines.push({ text: '  Welcome to ' + (term.site.title || 'Kyra\'s home') + ' — ' + (term.site.url || 'blog.amyinfo.com'), cls: 'green bold', delay: 60 });
+    lines.push({ text: '  Type \'help\' for available commands. Type \'exit\' for normal view.', cls: 'dim', delay: 50 });
+    lines.push({ text: '', cls: '', delay: 30 });
 
     typeLines(lines, 0, function () {
       term.booting = false;
       term.input.disabled = false;
-      var inputLine = document.getElementById('terminal-input-line');
-      if (inputLine) inputLine.style.display = '';
+      showEl('terminal-input-line');
       term.input.focus();
-      showPrompt();
     });
   }
 
-  function typeLines(lines, index, callback) {
-    if (index >= lines.length) {
-      if (callback) callback();
-      return;
-    }
-
-    var line = lines[index];
-    addOutput(line.text, line.cls, line.delay > 0);
-
-    if (line.delay > 0) {
-      setTimeout(function () {
-        typeLines(lines, index + 1, callback);
-      }, line.delay);
+  /* ===== TYPEWRITER EFFECT ===== */
+  function typeLines(lines, idx, done) {
+    if (idx >= lines.length) { if (done) done(); return; }
+    var l = lines[idx];
+    addOutput(l.text, l.cls, l.delay > 0);
+    if (l.delay > 0) {
+      setTimeout(function () { typeLines(lines, idx + 1, done); }, l.delay);
     } else {
-      typeLines(lines, index + 1, callback);
+      typeLines(lines, idx + 1, done);
     }
   }
 
   function addOutput(text, cls, animated) {
-    if (!text && text !== '') return;
-
-    var line = document.createElement('div');
-    line.className = 'terminal-line' + (cls ? ' ' + cls : '');
-
-    if (animated) {
-      line.textContent = '';
-      term.screen.appendChild(line);
-      typeText(line, text, 0, 8);
+    if (text === undefined) return;
+    var el = document.createElement('div');
+    el.className = 'terminal-line' + (cls ? ' ' + cls : '');
+    if (animated && text) {
+      el.textContent = '';
+      term.screen.appendChild(el);
+      typeText(el, text, 0, 6);
     } else {
       if (cls === 'ascii') {
-        line.className = 'terminal-line terminal-ascii';
-        line.textContent = text;
-      } else {
-        line.textContent = text;
+        el.className = 'terminal-line terminal-ascii';
       }
-      term.screen.appendChild(line);
+      el.textContent = text;
+      term.screen.appendChild(el);
     }
-
-    scrollToBottom();
+    scrollBottom();
   }
 
-  function typeText(element, text, index, speed) {
-    if (index < text.length) {
-      element.textContent += text[index];
-      scrollToBottom();
-      setTimeout(function () {
-        typeText(element, text, index + 1, speed);
-      }, speed);
+  function typeText(el, text, i, speed) {
+    if (i < text.length) {
+      el.textContent += text[i];
+      scrollBottom();
+      setTimeout(function () { typeText(el, text, i + 1, speed); }, speed);
     }
   }
 
-  function scrollToBottom() {
+  function addOutputRaw(html, cls) {
+    var el = document.createElement('div');
+    el.className = 'terminal-line' + (cls ? ' ' + cls : '');
+    el.innerHTML = html;
+    term.screen.appendChild(el);
+    scrollBottom();
+  }
+
+  function scrollBottom() {
     term.screen.scrollTop = term.screen.scrollHeight;
   }
 
-  function showPrompt() {
-    var promptEl = document.querySelector('.terminal-prompt');
-    if (promptEl) {
-      promptEl.textContent = 'guest@kyraos:~$';
-    }
+  function showEl(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = '';
   }
 
+  function hideEl(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  }
+
+  /* ===== INPUT PROCESSING ===== */
   function processCommand(input) {
     if (!input) {
-      renderPromptLine(input, '');
+      renderPromptLine('');
       return;
     }
-
     term.history.push(input);
     term.historyIndex = term.history.length;
 
@@ -241,125 +230,346 @@
     var args = parts.slice(1).join(' ');
 
     var cmd = term.commands[cmdName];
-
+    renderPromptLine(input);
     if (cmd) {
-      renderPromptLine(input, '');
       cmd.fn(args);
     } else {
-      renderPromptLine(input, '');
       addOutput(input + ': command not found', 'red');
       addOutput('Type \'help\' for available commands.', 'dim');
     }
-
     term.input.value = '';
-    scrollToBottom();
+    scrollBottom();
   }
 
-  function renderPromptLine(input, output) {
-    var line = document.createElement('div');
-    line.className = 'terminal-line';
-    line.innerHTML = '<span class="terminal-prompt-inline" style="color:var(--terminal-prompt)">guest@kyraos:~$</span> '
-      + escapeHtml(input);
-    term.screen.appendChild(line);
+  function renderPromptLine(input) {
+    addOutputRaw(
+      '<span style="color:var(--terminal-prompt)">guest@kyraos:~$</span> '
+      + escapeHtml(input)
+    );
   }
 
-  function navigateHistory(direction) {
-    if (term.history.length === 0) return;
-
-    term.historyIndex += direction;
-
-    if (term.historyIndex < 0) {
-      term.historyIndex = -1;
-      term.input.value = '';
-      return;
-    }
-
-    if (term.historyIndex >= term.history.length) {
-      term.historyIndex = term.history.length;
-      term.input.value = '';
-      return;
-    }
-
+  /* ===== NAVIGATION ===== */
+  function navigateHistory(dir) {
+    if (!term.history.length) return;
+    term.historyIndex += dir;
+    if (term.historyIndex < 0) { term.historyIndex = -1; term.input.value = ''; return; }
+    if (term.historyIndex >= term.history.length) { term.historyIndex = term.history.length; term.input.value = ''; return; }
     term.input.value = term.history[term.historyIndex];
-    // Move cursor to end
     setTimeout(function () {
       term.input.selectionStart = term.input.selectionEnd = term.input.value.length;
     }, 0);
   }
 
   function doTabCompletion() {
-    var input = term.input.value.trim();
-    if (!input) return;
-
-    var parts = input.split(/\s+/);
+    var val = term.input.value.trim();
+    if (!val) return;
+    var parts = val.split(/\s+/);
     var partial = parts[0].toLowerCase();
-
-    var matches = Object.keys(term.commands).filter(function (cmd) {
-      return cmd.indexOf(partial) === 0;
+    var matches = Object.keys(term.commands).filter(function (c) {
+      return c.indexOf(partial) === 0;
     });
-
     if (matches.length === 1) {
       var rest = parts.slice(1).join(' ');
       term.input.value = matches[0] + (rest ? ' ' + rest : ' ');
     } else if (matches.length > 1) {
-      renderPromptLine(term.input.value, '');
-      addOutput(matches.join('  '), 'comment');
+      renderPromptLine(val);
+      var cols = Math.ceil(Math.sqrt(matches.length));
+      var rows = Math.ceil(matches.length / cols);
+      var grid = '';
+      for (var i = 0; i < rows; i++) {
+        for (var j = 0; j < cols; j++) {
+          var idx = j * rows + i;
+          if (idx < matches.length) {
+            grid += padRight(matches[idx], 14);
+          }
+        }
+        grid += '\n';
+      }
+      addOutput(grid, 'comment');
     }
   }
 
-  // ========== COMMAND HANDLERS ==========
+  /* ===== MODE SWITCHING ===== */
+  function cmdExit() {
+    exitToNormal();
+  }
 
+  function exitToNormal() {
+    term.overlay.classList.add('hidden');
+    term.returnBtn.classList.add('visible');
+    term.input.blur();
+    document.body.style.overflow = '';
+  }
+
+  function enterTerminalMode() {
+    term.overlay.classList.remove('hidden');
+    term.returnBtn.classList.remove('visible');
+    document.body.style.overflow = 'hidden';
+    setTimeout(function () { term.input.focus(); }, 100);
+  }
+
+  /* ===== COMMAND: help ===== */
   function cmdHelp() {
     addOutput('Available commands:', 'green bold');
     addOutput('');
-
-    var cmdNames = Object.keys(term.commands).sort();
-
-    cmdNames.forEach(function (name) {
-      var cmd = term.commands[name];
-      if (name === 'posts') return;
-      var desc = cmd.desc || '';
-      addOutput('  ' + padRight(name, 12) + '  ' + desc);
+    var names = Object.keys(term.commands).sort();
+    var seen = {};
+    names.forEach(function (n) {
+      if (seen[n] || n === 'open' || n === 'man') return;
+      seen[n] = true;
+      var d = term.commands[n].desc || '';
+      addOutput('  ' + padRight(n, 10) + '  ' + d);
     });
-
     addOutput('');
-    addOutput('Tab completion available.', 'dim');
+    addOutput('Navigation tips:', 'cyan bold');
+    addOutput('  Use ↑/↓ for command history, Tab for auto-complete.');
+    addOutput('  Click post titles or type cat <number> to open a post.');
+    addOutput('  Type \'exit\' to switch to the normal page layout.');
+    addOutput('  Click the power button (⏻) in the title bar to exit.');
   }
 
-  function cmdPosts() {
-    if (term.posts.length === 0) {
+  /* ===== COMMAND: ls ===== */
+  function cmdLs(args) {
+    if (!term.posts.length) {
       addOutput('No posts found.', 'amber');
       return;
     }
+    var longFormat = args.indexOf('-l') !== -1;
+    var showAll = args.indexOf('-a') !== -1;
+    var page = 1;
 
-    addOutput('Recent posts:', 'green bold');
+    var pageMatch = args.match(/^(\d+)$/);
+    if (pageMatch) page = parseInt(pageMatch[1], 10);
+
+    var perPage = showAll ? term.posts.length : 10;
+    var totalPages = Math.ceil(term.posts.length / perPage);
+    var start = (page - 1) * perPage;
+    var end = Math.min(start + perPage, term.posts.length);
+    var pagePosts = term.posts.slice(start, end);
+
+    if (showAll) {
+      addOutput('All ' + term.posts.length + ' posts:', 'green bold');
+    } else {
+      addOutput('Recent posts (page ' + page + '/' + totalPages + ', ' + term.posts.length + ' total):', 'green bold');
+    }
     addOutput('');
 
-    term.posts.forEach(function (post, i) {
-      var num = String(i + 1);
-      var title = post.title;
-      var date = post.date || '';
-      var url = post.url || '#';
-      var lineEl = document.createElement('div');
-      lineEl.className = 'terminal-line terminal-post-entry';
-      lineEl.innerHTML = '<span style="color:var(--terminal-comment)">' + padRight(num, 3) + '</span>'
-        + '<a class="terminal-post-title" href="' + url + '">' + escapeHtml(title) + '</a>'
-        + '<span class="terminal-post-date">' + date + '</span>';
-      term.screen.appendChild(lineEl);
+    pagePosts.forEach(function (p, i) {
+      var globalIdx = start + i + 1;
+      if (longFormat) {
+        var tagsStr = (p.tags && p.tags.length) ? ' [' + p.tags.join(', ') + ']' : '';
+        addOutputRaw(
+          '  <span class="terminal-post-idx">' + globalIdx + '.</span>'
+          + '<a class="terminal-post-title" data-idx="' + globalIdx + '">' + escHtml(p.title) + '</a>'
+          + '<span class="terminal-post-date">' + (p.date || '') + '</span>'
+          + '<span class="terminal-post-tags">' + tagsStr + '</span>'
+        );
+      } else {
+        addOutputRaw(
+          '  <span class="terminal-post-idx">' + padRight(String(globalIdx), 3) + '</span>'
+          + '<a class="terminal-post-title" data-idx="' + globalIdx + '">' + escHtml(p.title) + '</a>'
+          + '<span class="terminal-post-date">' + (p.date || '') + '</span>'
+        );
+      }
     });
 
     addOutput('');
-    addOutput('Click a post to read it, or visit the blog feed below.', 'dim');
+    var hint = 'Use cat <number> to read a post, or ls <page> for more.';
+    if (!showAll && term.posts.length > perPage) {
+      hint += ' Use ls -a to show all.';
+    }
+    addOutput(hint, 'dim');
+
+    // Bind click handlers for post titles
+    setTimeout(bindPostClicks, 50);
   }
 
+  function bindPostClicks() {
+    var links = term.screen.querySelectorAll('.terminal-post-title[data-idx]');
+    for (var i = 0; i < links.length; i++) {
+      links[i].addEventListener('click', function (e) {
+        e.preventDefault();
+        var idx = parseInt(this.getAttribute('data-idx'), 10);
+        openPostByIdx(idx);
+      });
+    }
+  }
+
+  /* ===== COMMAND: cat / open ===== */
+  function cmdCat(args) {
+    if (!args) {
+      addOutput('Usage: cat <number> or cat <post title keywords>', 'amber');
+      addOutput('  e.g. cat 1       — open post #1 from ls output', 'dim');
+      addOutput('  e.g. cat vault   — open first post matching "vault"', 'dim');
+      return;
+    }
+
+    var numMatch = args.match(/^(\d+)$/);
+    if (numMatch) {
+      var idx = parseInt(numMatch[1], 10);
+      openPostByIdx(idx);
+      return;
+    }
+
+    var query = args.toLowerCase();
+    for (var i = 0; i < term.posts.length; i++) {
+      if (term.posts[i].title.toLowerCase().indexOf(query) !== -1) {
+        openPost(term.posts[i]);
+        return;
+      }
+    }
+    addOutput('No post found matching "' + args + '". Try ls to see available posts.', 'amber');
+  }
+
+  function openPostByIdx(idx) {
+    var p = term.posts[idx - 1];
+    if (p) {
+      openPost(p);
+    } else {
+      addOutput('Post #' + idx + ' not found. Use ls to list posts.', 'red');
+    }
+  }
+
+  function openPost(post) {
+    addOutput('Opening "' + post.title + '"...', 'green');
+    if (post.url) {
+      window.location.href = post.url;
+    }
+  }
+
+  /* ===== COMMAND: search ===== */
+  function cmdSearch(args) {
+    if (!args) {
+      addOutput('Usage: search <query>', 'amber');
+      addOutput('  e.g. search kubernetes', 'dim');
+      return;
+    }
+    var q = args.toLowerCase();
+    var results = [];
+    for (var i = 0; i < term.posts.length; i++) {
+      var p = term.posts[i];
+      if (p.title.toLowerCase().indexOf(q) !== -1
+        || (p.tags && p.tags.join(' ').toLowerCase().indexOf(q) !== -1)) {
+        results.push(p);
+      }
+    }
+    if (!results.length) {
+      addOutput('No results for "' + args + '".', 'amber');
+      return;
+    }
+    addOutput('Found ' + results.length + ' result(s) for "' + args + '":', 'green bold');
+    addOutput('');
+    results.forEach(function (p) {
+      addOutputRaw(
+        '  <a class="terminal-post-title" data-url="' + escHtml(p.url) + '">'
+        + escHtml(p.title) + '</a>'
+        + '<span class="terminal-post-date">' + (p.date || '') + '</span>'
+      );
+    });
+    addOutput('');
+    addOutput('Type cat <number> from ls output to open, or click above.', 'dim');
+    setTimeout(function () {
+      var links = term.screen.querySelectorAll('.terminal-post-title[data-url]');
+      for (var j = 0; j < links.length; j++) {
+        links[j].addEventListener('click', function () {
+          window.location.href = this.getAttribute('data-url');
+        });
+      }
+    }, 50);
+  }
+
+  /* ===== COMMAND: tags ===== */
+  function cmdTags() {
+    if (!term.tags.length) {
+      addOutput('No tags found.', 'amber');
+      return;
+    }
+    addOutput('Tags (' + term.tags.length + ' total):', 'green bold');
+    addOutput('');
+    var html = '<div class="terminal-line terminal-tag-list">';
+    term.tags.forEach(function (t) {
+      var count = 0;
+      for (var i = 0; i < term.posts.length; i++) {
+        if (term.posts[i].tags && term.posts[i].tags.indexOf(t) !== -1) count++;
+      }
+      html += '<span class="terminal-tag-entry" data-tag="' + escHtml(t) + '">'
+        + escHtml(t) + ' <span class="terminal-tag-count">(' + count + ')</span>'
+        + '</span>';
+    });
+    html += '</div>';
+    addOutputRaw(html);
+    addOutput('');
+    addOutput('Type tag <name> to see posts for a specific tag, or click a tag above.', 'dim');
+    setTimeout(function () {
+      var entries = term.screen.querySelectorAll('.terminal-tag-entry[data-tag]');
+      for (var j = 0; j < entries.length; j++) {
+        entries[j].addEventListener('click', function () {
+          processCommand('tag ' + this.getAttribute('data-tag'));
+        });
+      }
+    }, 50);
+  }
+
+  /* ===== COMMAND: tag ===== */
+  function cmdTag(args) {
+    if (!args) {
+      addOutput('Usage: tag <tagname>', 'amber');
+      addOutput('  e.g. tag kubernetes', 'dim');
+      addOutput('  Use tags to list all available tags.', 'dim');
+      return;
+    }
+    var q = args.toLowerCase();
+    var matching = [];
+    for (var i = 0; i < term.posts.length; i++) {
+      var p = term.posts[i];
+      if (p.tags) {
+        for (var j = 0; j < p.tags.length; j++) {
+          if (p.tags[j].toLowerCase().indexOf(q) !== -1) {
+            matching.push(p);
+            break;
+          }
+        }
+      }
+    }
+    if (!matching.length) {
+      addOutput('No posts found with tag "' + args + '".', 'amber');
+      return;
+    }
+    addOutput('Posts tagged "' + args + '" (' + matching.length + '):', 'green bold');
+    addOutput('');
+    matching.forEach(function (p, i) {
+      addOutputRaw(
+        '  <span class="terminal-post-idx">' + (i + 1) + '.</span>'
+        + '<a class="terminal-post-title" data-url="' + escHtml(p.url) + '">'
+        + escHtml(p.title) + '</a>'
+        + '<span class="terminal-post-date">' + (p.date || '') + '</span>'
+      );
+    });
+    setTimeout(function () {
+      var links = term.screen.querySelectorAll('.terminal-post-title[data-url]');
+      for (var k = 0; k < links.length; k++) {
+        links[k].addEventListener('click', function () {
+          window.location.href = this.getAttribute('data-url');
+        });
+      }
+    }, 50);
+  }
+
+  /* ===== COMMAND: about ===== */
   function cmdAbout() {
     addOutput('About', 'green bold');
     addOutput('');
-    ABOUT_TEXT.forEach(function (line) {
-      addOutput(line);
-    });
+    addOutput('Infrastructure & Platform Engineer. I write about Kubernetes,');
+    addOutput('cloud-native technologies, networking, and infrastructure automation.');
+    addOutput('');
+    addOutput('This site is a collection of notes, guides, and hard-won lessons');
+    addOutput('from running production systems.');
+    addOutput('');
+    addOutput('  ' + term.posts.length + ' posts published', 'cyan');
+    addOutput('  ' + term.tags.length + ' unique tags', 'cyan');
   }
 
+  /* ===== COMMAND: skills ===== */
   function cmdSkills() {
     addOutput('Skills & Technologies', 'green bold');
     addOutput('');
@@ -368,51 +578,125 @@
     });
   }
 
+  /* ===== COMMAND: whoami ===== */
   function cmdWhoami() {
     addOutput('');
-    WHOAMI_TEXT.forEach(function (line) {
-      addOutput(line);
-    });
+    addOutput('  Login:    magichuihui');
+    addOutput('  Name:     Kyra');
+    addOutput('  Site:     ' + (term.site.url || 'blog.amyinfo.com'));
+    addOutput('  Posts:    ' + term.posts.length);
+    addOutput('  Tags:     ' + term.tags.length);
+    addOutput('  Uptime:   varies');
     addOutput('');
   }
 
+  /* ===== COMMAND: neofetch ===== */
   function cmdNeofetch() {
     addOutput('');
-    addOutput('          .-\'`' + padRight('`' + '`' + '\'-.', 30), 'amber');
-    addOutput('        .\'  ' + '   ' + '    `'.replace(/\s+/, ' '), 'amber');
-    addOutput('       /    ' + 'KyraOS' + '    \\', 'amber');
-    addOutput('      ;    ' + 'v1.0.0' + '     ;', 'amber');
-    addOutput('      |              |', 'amber');
-    addOutput('      ;              ;', 'amber');
-    addOutput('       \\            /', 'amber');
-    addOutput('        `.        .\'', 'amber');
-    addOutput('          `-...-\'', 'amber');
+    addOutput('          .-\'`' + padRight('`' + '\'-.', 30), 'amber');
+    addOutput('        .\'  KyraOS v1.0.0  `.', 'amber');
+    addOutput('       /      ' + term.site.title + '      \\', 'amber');
+    addOutput('      ;    ' + (term.site.url || '') + '    ;', 'amber');
+    addOutput('      |     ' + term.posts.length + ' posts loaded     |', 'amber');
+    addOutput('      ;                      ;', 'amber');
+    addOutput('       \\                    /', 'amber');
+    addOutput('        `.                .\'', 'amber');
+    addOutput('          `-...----...-\'', 'amber');
     addOutput('');
-    addOutput('  ' + padRight('Host', 14) + 'Kyra\'s home', 'cyan');
-    addOutput('  ' + padRight('Kernel', 14) + 'KyraOS v1.0.0', 'cyan');
-    addOutput('  ' + padRight('Shell', 14) + '/bin/bash', 'cyan');
-    addOutput('  ' + padRight('Posts', 14) + term.posts.length + ' articles', 'cyan');
-    addOutput('  ' + padRight('Uptime', 14) + 'long enough', 'cyan');
+    addOutputRaw(
+      '  <span style="color:var(--terminal-cyan)">' + padRight('Host', 16) + '</span><span style="color:var(--terminal-text)">' + (term.site.title || 'Kyra\'s home') + '</span>');
+    addOutputRaw(
+      '  <span style="color:var(--terminal-cyan)">' + padRight('Kernel', 16) + '</span><span style="color:var(--terminal-text)">KyraOS v1.0.0</span>');
+    addOutputRaw(
+      '  <span style="color:var(--terminal-cyan)">' + padRight('Posts', 16) + '</span><span style="color:var(--terminal-text)">' + term.posts.length + ' articles</span>');
+    addOutputRaw(
+      '  <span style="color:var(--terminal-cyan)">' + padRight('Tags', 16) + '</span><span style="color:var(--terminal-text)">' + term.tags.length + ' unique</span>');
+    addOutputRaw(
+      '  <span style="color:var(--terminal-cyan)">' + padRight('Uptime', 16) + '</span><span style="color:var(--terminal-text)">long enough</span>');
     addOutput('');
   }
 
+  /* ===== COMMAND: contact / social ===== */
   function cmdContact() {
     addOutput('Contact', 'green bold');
     addOutput('');
-    CONTACT.forEach(function (c) {
-      addOutput('  ' + padRight(c.key, 12) + c.value);
-    });
+    addOutput('  GitHub    github.com/magichuihui');
+    addOutput('  Blog      ' + (term.site.url || 'blog.amyinfo.com'));
     addOutput('');
-    addOutput('I\'m also active on the Fediverse & various Kubernetes communities.', 'dim');
+    addOutput('Active in Kubernetes communities and the Fediverse.', 'dim');
   }
 
-  function cmdBanner() {
+  function cmdSocial() {
+    addOutput('Social Links', 'green bold');
     addOutput('');
-    ASCII_BANNER.forEach(function (line) {
-      if (line) {
+    addOutput('  GitHub    github.com/magichuihui');
+    addOutput('  Twitter   @magichuihui');
+    addOutput('  Blog      ' + (term.site.url || 'blog.amyinfo.com'));
+    addOutput('');
+    addOutput('  RSS Feed  ' + (term.site.url || '/') + 'feed.xml', 'dim');
+  }
+
+  /* ===== COMMAND: github ===== */
+  function cmdGithub() {
+    addOutput('Opening GitHub profile...', 'green');
+    addOutput('https://github.com/magichuihui', 'blue');
+    window.open('https://github.com/magichuihui', '_blank');
+  }
+
+  /* ===== COMMAND: repo ===== */
+  function cmdRepo() {
+    addOutput('Opening source code...', 'green');
+    addOutput('https://github.com/magichuihui/magichuihui.github.io', 'blue');
+    window.open('https://github.com/magichuihui/magichuihui.github.io', '_blank');
+  }
+
+  /* ===== COMMAND: clear ===== */
+  function cmdClear() {
+    term.screen.innerHTML = '';
+    term.input.value = '';
+    term.input.focus();
+  }
+
+  /* ===== COMMAND: date ===== */
+  function cmdDate() {
+    addOutput(new Date().toString(), 'green');
+  }
+
+  /* ===== COMMAND: uptime ===== */
+  function cmdUptime() {
+    addOutput(' ' + UPTIME_JOKES[Math.floor(Math.random() * UPTIME_JOKES.length)], 'amber');
+  }
+
+  /* ===== COMMAND: history ===== */
+  function cmdHistory() {
+    if (!term.history.length) {
+      addOutput('No commands in history.', 'dim');
+      return;
+    }
+    addOutput('');
+    term.history.forEach(function (c, i) {
+      addOutput('  ' + (i + 1) + '  ' + c);
+    });
+    addOutput('');
+  }
+
+  /* ===== COMMAND: echo ===== */
+  function cmdEcho(args) {
+    if (args) addOutput(args, 'green');
+  }
+
+  /* ===== COMMAND: uname ===== */
+  function cmdUname() {
+    addOutput('KyraOS kyra-blog 6.8.0-kyra #1 SMP PREEMPT_DYNAMIC x86_64 GNU/Linux', 'green');
+  }
+
+  /* ===== COMMAND: banner ===== */
+  function cmdBanner() {
+    ASCII_BANNER.forEach(function (l) {
+      if (l) {
         var el = document.createElement('div');
         el.className = 'terminal-line terminal-ascii';
-        el.textContent = line.replace(/%c\w+%/g, '');
+        el.textContent = l;
         term.screen.appendChild(el);
       } else {
         addOutput('');
@@ -421,74 +705,21 @@
     addOutput('Welcome back!', 'green');
   }
 
-  function cmdClear() {
-    term.screen.innerHTML = '';
-    term.input.value = '';
-    term.input.focus();
-  }
-
-  function cmdDate() {
-    var now = new Date();
-    addOutput(now.toString(), 'green');
-  }
-
-  function cmdUptime() {
-    var joke = UPTIME_JOKES[Math.floor(Math.random() * UPTIME_JOKES.length)];
-    addOutput(' ' + joke, 'amber');
-  }
-
-  function cmdHistory() {
-    if (term.history.length === 0) {
-      addOutput('No commands in history.', 'dim');
-      return;
-    }
-
-    addOutput('');
-    term.history.forEach(function (cmd, i) {
-      addOutput('  ' + String(i + 1) + '  ' + cmd);
-    });
-    addOutput('');
-  }
-
-  function cmdGithub() {
-    addOutput('Opening GitHub profile...', 'green');
-    addOutput('https://github.com/magichuihui', 'blue');
-    window.open('https://github.com/magichuihui', '_blank');
-  }
-
-  function cmdRepo() {
-    addOutput('Opening source code...', 'green');
-    addOutput('https://github.com/magichuihui/magichuihui.github.io', 'blue');
-    window.open('https://github.com/magichuihui/magichuihui.github.io', '_blank');
-  }
-
-  function cmdEcho(args) {
-    if (args) {
-      addOutput(args, 'green');
-    }
-  }
-
-  function cmdUname() {
-    addOutput('KyraOS kyra-blog 6.8.0-kyra #1 SMP PREEMPT_DYNAMIC x86_64 GNU/Linux', 'green');
-  }
-
-  // ========== UTILITIES ==========
-
+  /* ===== UTILITIES ===== */
   function escapeHtml(str) {
-    var div = document.createElement('div');
-    div.appendChild(document.createTextNode(str));
-    return div.innerHTML;
+    var d = document.createElement('div');
+    d.appendChild(document.createTextNode(str));
+    return d.innerHTML;
   }
+  var escHtml = escapeHtml;
 
   function padRight(str, len) {
     str = String(str);
-    while (str.length < len) {
-      str += ' ';
-    }
+    while (str.length < len) str += ' ';
     return str;
   }
 
-  // Initialize on DOM ready
+  /* ===== BOOT ===== */
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
