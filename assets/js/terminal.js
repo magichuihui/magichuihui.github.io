@@ -85,7 +85,7 @@
     addCommand('uname',    cmdUname,   'Print system information');
     addCommand('clear',    cmdClear,   'Clear the terminal');
     addCommand('banner',   cmdBanner,  'Display the startup banner');
-    addCommand('exit',     cmdExit,    'Switch to normal page view');
+    addCommand('exit',     cmdExit,    'Exit terminal to standard view');
     addCommand('help',     cmdHelp,    'Show this help message');
     addCommand('man',      cmdHelp,    'Alias for help');
   }
@@ -145,7 +145,7 @@
     lines.push({ text: '', cls: '', delay: 30 });
     ASCII_BANNER.forEach(function (l) { lines.push({ text: l, cls: 'ascii', delay: 15 }); });
     lines.push({ text: '  Welcome to ' + (term.site.title || 'Kyra\'s home') + ' — ' + (term.site.url || 'blog.amyinfo.com'), cls: 'green bold', delay: 60 });
-    lines.push({ text: '  Type \'help\' for available commands. Type \'exit\' for normal view.', cls: 'dim', delay: 50 });
+    lines.push({ text: '  Type \'help\' for available commands. Type \'exit\' for standard view.', cls: 'dim', delay: 50 });
     lines.push({ text: '', cls: '', delay: 30 });
 
     typeLines(lines, 0, function () {
@@ -324,7 +324,7 @@
     addOutput('Navigation tips:', 'cyan bold');
     addOutput('  Use ↑/↓ for command history, Tab for auto-complete.');
     addOutput('  Click post titles or type cat <number> to open a post.');
-    addOutput('  Type \'exit\' to switch to the normal page layout.');
+    addOutput('  Type \'exit\' to switch to the standard view.');
     addOutput('  Click the power button (⏻) in the title bar to exit.');
   }
 
@@ -374,7 +374,7 @@
     });
 
     addOutput('');
-    var hint = 'Use cat <number> to read a post, or ls <page> for more.';
+    var hint = 'Use cat <number> to read a post, or ls <n> for more.';
     if (!showAll && term.posts.length > perPage) {
       hint += ' Use ls -a to show all.';
     }
@@ -431,9 +431,9 @@
   }
 
   function openPost(post) {
-    addOutput('Opening "' + post.title + '"...', 'green');
+    addOutput('Opening "' + post.title + '" in new tab...', 'green');
     if (post.url) {
-      window.location.href = post.url;
+      window.open(post.url, '_blank');
     }
   }
 
@@ -472,7 +472,7 @@
       var links = term.screen.querySelectorAll('.terminal-post-title[data-url]');
       for (var j = 0; j < links.length; j++) {
         links[j].addEventListener('click', function () {
-          window.location.href = this.getAttribute('data-url');
+          window.open(this.getAttribute('data-url'), '_blank');
         });
       }
     }, 50);
@@ -549,7 +549,7 @@
       var links = term.screen.querySelectorAll('.terminal-post-title[data-url]');
       for (var k = 0; k < links.length; k++) {
         links[k].addEventListener('click', function () {
-          window.location.href = this.getAttribute('data-url');
+          window.open(this.getAttribute('data-url'), '_blank');
         });
       }
     }, 50);
