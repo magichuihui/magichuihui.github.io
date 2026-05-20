@@ -1,0 +1,25 @@
+<div class="terminal-wrapper">
+  <div class="terminal-titlebar">
+    <div class="terminal-dots">
+      <span class="terminal-dot red"></span>
+      <span class="terminal-dot amber"></span>
+      <span class="terminal-dot green"></span>
+    </div>
+    <span class="terminal-title">guest@kyraos:~/home — bash</span>
+  </div>
+  <div id="terminal-screen" class="terminal-screen">
+    <div class="terminal-line dim">Starting terminal...</div>
+  </div>
+  <div class="terminal-input-line" id="terminal-input-line">
+    <span class="terminal-prompt">guest@kyraos:~$</span>
+    <input type="text" id="terminal-input" class="terminal-input" autofocus spellcheck="false" autocomplete="off" aria-label="Terminal input" />
+  </div>
+</div>
+
+<script>
+window._terminalPosts = [
+  {% for post in site.posts limit:20 %}
+  { title: {{ post.title | jsonify }}, url: {{ post.url | relative_url | jsonify }}, date: {{ post.date | date: "%Y-%m-%d" | jsonify }} }{% unless forloop.last %},{% endunless %}
+  {% endfor %}
+];
+</script>

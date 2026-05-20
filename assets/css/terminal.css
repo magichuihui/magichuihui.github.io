@@ -1,0 +1,251 @@
+/* Terminal Hero Theme - Tokyo Night inspired */
+:root {
+  --terminal-bg: #0d1117;
+  --terminal-text: #c9d1d9;
+  --terminal-green: #7ec699;
+  --terminal-amber: #d4a84b;
+  --terminal-red: #f7768e;
+  --terminal-blue: #7aa2f7;
+  --terminal-purple: #bb9af7;
+  --terminal-cyan: #7dcfff;
+  --terminal-comment: #565f89;
+  --terminal-prompt: #98c379;
+  --terminal-title-bg: #1c2333;
+  --terminal-title-text: #abb2bf;
+  --terminal-border: #2c3e50;
+  --terminal-cursor: #7ec699;
+}
+
+.terminal-wrapper {
+  margin: 1.5rem 0 2.5rem;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--terminal-border);
+}
+
+/* Title bar */
+.terminal-titlebar {
+  background: var(--terminal-title-bg);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+  border-bottom: 1px solid var(--terminal-border);
+}
+
+.terminal-dots {
+  display: flex;
+  gap: 7px;
+}
+
+.terminal-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.terminal-dot.red { background: #ff5f56; }
+.terminal-dot.amber { background: #ffbd2e; }
+.terminal-dot.green { background: #27c93f; }
+
+.terminal-title {
+  color: var(--terminal-title-text);
+  font-family: "SF Mono", Monaco, "Cascadia Code", "Fira Code", "Courier New", monospace;
+  font-size: 0.8rem;
+  margin: 0 auto;
+  opacity: 0.8;
+}
+
+/* Terminal screen */
+.terminal-screen {
+  background: var(--terminal-bg);
+  padding: 16px;
+  min-height: 320px;
+  max-height: 480px;
+  overflow-y: auto;
+  font-family: "SF Mono", Monaco, "Cascadia Code", "Fira Code", "Courier New", monospace;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--terminal-text);
+  scrollbar-width: thin;
+  scrollbar-color: var(--terminal-border) transparent;
+}
+
+.terminal-screen::-webkit-scrollbar {
+  width: 6px;
+}
+
+.terminal-screen::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.terminal-screen::-webkit-scrollbar-thumb {
+  background: var(--terminal-border);
+  border-radius: 3px;
+}
+
+/* Output lines */
+.terminal-line {
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-height: 1.25em;
+}
+
+.terminal-line.green { color: var(--terminal-green); }
+.terminal-line.amber { color: var(--terminal-amber); }
+.terminal-line.red { color: var(--terminal-red); }
+.terminal-line.blue { color: var(--terminal-blue); }
+.terminal-line.purple { color: var(--terminal-purple); }
+.terminal-line.cyan { color: var(--terminal-cyan); }
+.terminal-line.comment { color: var(--terminal-comment); }
+.terminal-line.bold { font-weight: 700; }
+.terminal-line.dim { opacity: 0.7; }
+
+/* Input line */
+.terminal-input-line {
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.terminal-prompt {
+  color: var(--terminal-prompt);
+  margin-right: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.terminal-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--terminal-text);
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  flex: 1;
+  caret-color: var(--terminal-cursor);
+  padding: 0;
+  margin: 0;
+}
+
+/* Cursor blink for non-input prompts */
+.terminal-cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  background: var(--terminal-cursor);
+  margin-left: 2px;
+  animation: blink 1s step-end infinite;
+  vertical-align: text-bottom;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ASCII art */
+.terminal-ascii {
+  color: var(--terminal-purple);
+  line-height: 1.2;
+  font-size: 0.75rem;
+  white-space: pre;
+}
+
+/* Command output tables */
+.terminal-table {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 16px;
+  margin: 4px 0;
+}
+
+.terminal-table .key {
+  color: var(--terminal-cyan);
+}
+
+.terminal-table .value {
+  color: var(--terminal-text);
+}
+
+/* Help command grid */
+.terminal-help-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 24px;
+  margin: 4px 0;
+}
+
+.terminal-help-grid .cmd {
+  color: var(--terminal-green);
+  font-weight: 600;
+}
+
+.terminal-help-grid .desc {
+  color: var(--terminal-comment);
+}
+
+/* Post entries */
+.terminal-post-entry {
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+}
+
+.terminal-post-entry:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.terminal-post-title {
+  color: var(--terminal-blue);
+  text-decoration: none;
+}
+
+.terminal-post-title:hover {
+  color: var(--terminal-cyan);
+  text-decoration: underline;
+}
+
+.terminal-post-date {
+  color: var(--terminal-comment);
+  font-size: 0.78rem;
+  margin-left: 8px;
+}
+
+/* "Kernel" boot messages */
+.terminal-boot-msg {
+  color: var(--terminal-comment);
+}
+
+.terminal-boot-msg .boot-ok {
+  color: var(--terminal-green);
+}
+
+.terminal-boot-msg .boot-info {
+  color: var(--terminal-blue);
+}
+
+.terminal-boot-msg .boot-warn {
+  color: var(--terminal-amber);
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+  .terminal-screen {
+    min-height: 260px;
+    max-height: 380px;
+    padding: 12px;
+    font-size: 0.78rem;
+  }
+
+  .terminal-ascii {
+    font-size: 0.55rem;
+  }
+
+  .terminal-title {
+    font-size: 0.7rem;
+  }
+}
