@@ -4,10 +4,6 @@ layout: page
 
 {{ content }}
 
-{% if page.terminal-hero %}
-  {% include terminal-hero.html %}
-{% endif %}
-
 {% assign posts = paginator.posts | default: site.posts %}
 
 <!-- role="list" needed so that `list-style: none` in Safari doesn't remove the list semantics -->
