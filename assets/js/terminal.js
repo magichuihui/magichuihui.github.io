@@ -433,7 +433,14 @@
   function openPost(post) {
     addOutput('Opening "' + post.title + '" in new tab...', 'green');
     if (post.url) {
-      window.open(post.url, '_blank');
+      var a = document.createElement('a');
+      a.href = post.url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
   }
 
@@ -472,7 +479,7 @@
       var links = term.screen.querySelectorAll('.terminal-post-title[data-url]');
       for (var j = 0; j < links.length; j++) {
         links[j].addEventListener('click', function () {
-          window.open(this.getAttribute('data-url'), '_blank');
+          openUrlNewTab(this.getAttribute('data-url'));
         });
       }
     }, 50);
@@ -549,7 +556,7 @@
       var links = term.screen.querySelectorAll('.terminal-post-title[data-url]');
       for (var k = 0; k < links.length; k++) {
         links[k].addEventListener('click', function () {
-          window.open(this.getAttribute('data-url'), '_blank');
+          openUrlNewTab(this.getAttribute('data-url'));
         });
       }
     }, 50);
@@ -640,14 +647,14 @@
   function cmdGithub() {
     addOutput('Opening GitHub profile...', 'green');
     addOutput('https://github.com/magichuihui', 'blue');
-    window.open('https://github.com/magichuihui', '_blank');
+    openUrlNewTab('https://github.com/magichuihui');
   }
 
   /* ===== COMMAND: repo ===== */
   function cmdRepo() {
     addOutput('Opening source code...', 'green');
     addOutput('https://github.com/magichuihui/magichuihui.github.io', 'blue');
-    window.open('https://github.com/magichuihui/magichuihui.github.io', '_blank');
+    openUrlNewTab('https://github.com/magichuihui/magichuihui.github.io');
   }
 
   /* ===== COMMAND: clear ===== */
@@ -706,6 +713,17 @@
   }
 
   /* ===== UTILITIES ===== */
+  function openUrlNewTab(url) {
+    var a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
   function escapeHtml(str) {
     var d = document.createElement('div');
     d.appendChild(document.createTextNode(str));
