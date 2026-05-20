@@ -161,14 +161,7 @@
   <link rel="stylesheet" href="{{ "/assets/css/staticman.css" | relative_url }}">
   {% endif %}
 
-  {% assign favicon_exists = site.static_files | where: "path", "/favicon.ico" | size %}
-  {% if favicon_exists == 1 %}
-  <link rel="icon" href="{{ '/favicon.ico' | relative_url }}" />
-  {% endif %}
-  {% assign favicon_jpeg = site.static_files | where: "relative_path", "/assets/img/amyinfo.com.jpeg" | size %}
-  {% if favicon_jpeg == 1 %}
   <link rel="icon" type="image/jpeg" href="{{ '/assets/img/amyinfo.com.jpeg' | relative_url }}" />
-  {% endif %}
 
   {% if page.head-extra %}
     {% for file in page.head-extra %}
