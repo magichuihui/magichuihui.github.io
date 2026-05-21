@@ -317,16 +317,58 @@
   }
 
   function doTabCompletion() {
-    var val = term.input.value.trim();
-    if (!val) return;
-    var parts = val.split(/\s+/);
-    var partial = parts[0].toLowerCase();
+    var val = term.input.value;
+    if (!val.trim()) return;
+
+    var pipeIdx = val.lastIndexOf('|');
+    var pipeActive = pipeIdx !== -1;
+
+    var beforePartial, partial;
+    if (pipeActive) {
+      beforePartial = val.substring(0, pipeIdx + 1);
+      partial = val.substring(pipeIdx + 1).trim();
+    } else {
+      beforePartial = '';
+      var parts = val.split(/\s+/);
+      partial = parts[0];
+    }
+
+    if (!partial) {
+      var allNames = Object.keys(term.commands).sort();
+      if (allNames.length < 2) return;
+      renderPromptLine(val);
+      var cols = Math.ceil(Math.sqrt(allNames.length));
+      var rows = Math.ceil(allNames.length / cols);
+      var grid = '';
+      for (var i = 0; i < rows; i++) {
+        for (var j = 0; j < cols; j++) {
+          var idx = j * rows + i;
+          if (idx < allNames.length) {
+            grid += padRight(allNames[idx], 14);
+          }
+        }
+        grid += '\n';
+      }
+      addOutput(grid, 'comment');
+      return;
+    }
+
+    var partialLower = partial.toLowerCase();
     var matches = Object.keys(term.commands).filter(function (c) {
-      return c.indexOf(partial) === 0;
+      return c.indexOf(partialLower) === 0;
     });
+
     if (matches.length === 1) {
-      var rest = parts.slice(1).join(' ');
-      term.input.value = matches[0] + (rest ? ' ' + rest : ' ');
+      if (pipeActive) {
+        var suffix = val.substring(pipeIdx + 1);
+        var typedBefore = suffix.substring(0, suffix.indexOf(partial) + partial.length);
+        var afterTyped = suffix.substring(suffix.indexOf(partial) + partial.length);
+        term.input.value = beforePartial + matches[0] + afterTyped + ' ';
+      } else {
+        var parts = val.split(/\s+/);
+        var rest = parts.slice(1).join(' ');
+        term.input.value = matches[0] + (rest ? ' ' + rest : ' ');
+      }
     } else if (matches.length > 1) {
       renderPromptLine(val);
       var cols = Math.ceil(Math.sqrt(matches.length));
