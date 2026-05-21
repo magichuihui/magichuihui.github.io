@@ -507,11 +507,19 @@
       return;
     }
     var idx = Math.floor(Math.random() * term.posts.length);
+    var p = term.posts[idx];
     if (term.pipeActive) {
       term.pipeBuffer = idx + 1;
-      addOutput('Picked #' + (idx + 1) + '...', 'green');
+      addOutput('Picked #' + (idx + 1) + ': "' + p.title + '"', 'green');
     } else {
-      openPost(term.posts[idx]);
+      addOutputRaw(
+        '  <span class="terminal-post-idx">' + padRight(String(idx + 1), 3) + '</span>'
+        + '<a class="terminal-post-title" data-idx="' + (idx + 1) + '">' + escHtml(p.title) + '</a>'
+        + '<span class="terminal-post-date">' + (p.date || '') + '</span>',
+        'green bold'
+      );
+      addOutput('Use cat ' + (idx + 1) + ' to open, or random | open for auto-open.', 'dim');
+      setTimeout(bindPostClicks, 50);
     }
   }
 
@@ -521,11 +529,19 @@
       addOutput('No posts available.', 'amber');
       return;
     }
+    var p = term.posts[0];
     if (term.pipeActive) {
       term.pipeBuffer = 1;
-      addOutput('Picked #1...', 'green');
+      addOutput('Picked #1: "' + p.title + '"', 'green');
     } else {
-      openPost(term.posts[0]);
+      addOutputRaw(
+        '  <span class="terminal-post-idx">' + padRight('1', 3) + '</span>'
+        + '<a class="terminal-post-title" data-idx="1">' + escHtml(p.title) + '</a>'
+        + '<span class="terminal-post-date">' + (p.date || '') + '</span>',
+        'green bold'
+      );
+      addOutput('Use cat 1 to open, or latest | open for auto-open.', 'dim');
+      setTimeout(bindPostClicks, 50);
     }
   }
 
