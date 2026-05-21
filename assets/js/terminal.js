@@ -326,6 +326,9 @@
     var beforePartial, partial;
     if (pipeActive) {
       beforePartial = val.substring(0, pipeIdx + 1);
+      if (beforePartial.charAt(beforePartial.length - 1) !== ' ') {
+        beforePartial += ' ';
+      }
       partial = val.substring(pipeIdx + 1).trim();
     } else {
       beforePartial = '';
@@ -442,6 +445,8 @@
 
     var perPage = showAll ? term.posts.length : 10;
     var totalPages = Math.ceil(term.posts.length / perPage);
+    if (page < 1) page = 1;
+    if (page > totalPages) page = totalPages;
     var start = (page - 1) * perPage;
     var end = Math.min(start + perPage, term.posts.length);
     var pagePosts = term.posts.slice(start, end);
