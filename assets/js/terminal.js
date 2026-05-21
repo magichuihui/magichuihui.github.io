@@ -14,7 +14,9 @@
     posts: [],
     tags: [],
     site: {},
-    exitBtn: null
+    exitBtn: null,
+    pipeActive: false,
+    pipeBuffer: null
   };
 
   /* ===== DATA ===== */
@@ -228,13 +230,26 @@
     }
     term.history.push(input);
     term.historyIndex = term.history.length;
+    renderPromptLine(input);
+
+    // Handle pipe: left | right
+    var pipeIdx = input.indexOf('|');
+    if (pipeIdx !== -1) {
+      var left = input.substring(0, pipeIdx).trim();
+      var right = input.substring(pipeIdx + 1).trim();
+      if (left && right) {
+        processPipe(left, right);
+        term.input.value = '';
+        scrollBottom();
+        return;
+      }
+    }
 
     var parts = input.split(/\s+/);
     var cmdName = parts[0].toLowerCase();
     var args = parts.slice(1).join(' ');
 
     var cmd = term.commands[cmdName];
-    renderPromptLine(input);
     if (cmd) {
       cmd.fn(args);
     } else {
@@ -243,6 +258,43 @@
     }
     term.input.value = '';
     scrollBottom();
+  }
+
+  function processPipe(left, right) {
+    term.pipeActive = true;
+    term.pipeBuffer = null;
+
+    // Execute left command
+    var leftParts = left.split(/\s+/);
+    var leftCmdName = leftParts[0].toLowerCase();
+    var leftArgs = leftParts.slice(1).join(' ');
+    var leftCmd = term.commands[leftCmdName];
+
+    if (!leftCmd) {
+      addOutput(left + ': command not found', 'red');
+      term.pipeActive = false;
+      return;
+    }
+    leftCmd.fn(leftArgs);
+
+    term.pipeActive = false;
+
+    // If left produced pipe output, pass to right command
+    if (term.pipeBuffer !== null) {
+      var rightParts = right.split(/\s+/);
+      var rightCmdName = rightParts[0].toLowerCase();
+      var rightArgs = rightParts.slice(1).join(' ');
+      var rightCmd = term.commands[rightCmdName];
+
+      if (!rightCmd) {
+        addOutput(right + ': command not found', 'red');
+        return;
+      }
+      // Prepend pipe output to right command args
+      var finalArgs = String(term.pipeBuffer) + (rightArgs ? ' ' + rightArgs : '');
+      rightCmd.fn(finalArgs);
+    }
+    term.pipeBuffer = null;
   }
 
   function renderPromptLine(input) {
@@ -455,7 +507,12 @@
       return;
     }
     var idx = Math.floor(Math.random() * term.posts.length);
-    openPost(term.posts[idx]);
+    if (term.pipeActive) {
+      term.pipeBuffer = idx + 1;
+      addOutput('Picked #' + (idx + 1) + '...', 'green');
+    } else {
+      openPost(term.posts[idx]);
+    }
   }
 
   /* ===== COMMAND: latest ===== */
@@ -464,7 +521,12 @@
       addOutput('No posts available.', 'amber');
       return;
     }
-    openPost(term.posts[0]);
+    if (term.pipeActive) {
+      term.pipeBuffer = 1;
+      addOutput('Picked #1...', 'green');
+    } else {
+      openPost(term.posts[0]);
+    }
   }
 
   /* ===== COMMAND: search ===== */
