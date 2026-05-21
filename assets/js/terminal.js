@@ -136,7 +136,10 @@
     term.booting = true;
     term.input.disabled = true;
     hideEl('terminal-input-line');
-    document.body.style.overflow = 'hidden';
+    // Only lock body scroll when terminal starts visible (homepage)
+    if (!term.overlay.classList.contains('hidden')) {
+      document.body.style.overflow = 'hidden';
+    }
 
     var lines = [];
     lines.push({ text: ' Booting KyraOS v1.0.0 ...',                   cls: 'boot-ok', delay: 50 });
@@ -472,22 +475,16 @@
     addOutput('Found ' + results.length + ' result(s) for "' + args + '":', 'green bold');
     addOutput('');
     results.forEach(function (p) {
+      var globalIdx = term.posts.indexOf(p) + 1;
       addOutputRaw(
-        '  <a class="terminal-post-title" data-url="' + escHtml(p.url) + '">'
-        + escHtml(p.title) + '</a>'
+        '  <span class="terminal-post-idx">' + padRight(String(globalIdx), 3) + '</span>'
+        + '<a class="terminal-post-title" data-idx="' + globalIdx + '">' + escHtml(p.title) + '</a>'
         + '<span class="terminal-post-date">' + (p.date || '') + '</span>'
       );
     });
     addOutput('');
-    addOutput('Type cat <number> from ls output to open, or click above.', 'dim');
-    setTimeout(function () {
-      var links = term.screen.querySelectorAll('.terminal-post-title[data-url]');
-      for (var j = 0; j < links.length; j++) {
-        links[j].addEventListener('click', function () {
-          openUrlNewTab(this.getAttribute('data-url'));
-        });
-      }
-    }, 50);
+    addOutput('Use cat <number> to read a post, or click above.', 'dim');
+    setTimeout(bindPostClicks, 50);
   }
 
   /* ===== COMMAND: tags ===== */
