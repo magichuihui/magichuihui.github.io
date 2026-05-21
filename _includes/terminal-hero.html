@@ -1,4 +1,4 @@
-<div id="terminal-overlay">
+<div id="terminal-overlay"{% if page.layout != 'home' %} class="hidden"{% endif %}>
   <div class="terminal-wrapper fullscreen">
     <div class="terminal-titlebar">
       <div class="terminal-dots">
@@ -19,7 +19,7 @@
   </div>
 </div>
 
-<button id="terminal-return-btn" class="terminal-return-btn" title="Switch to terminal mode">🖥 Terminal</button>
+<button id="terminal-return-btn" class="terminal-return-btn{% if page.layout != 'home' %} visible{% endif %}" title="Switch to terminal mode">🖥 Terminal</button>
 
 <script>
 window._terminalPosts = [
