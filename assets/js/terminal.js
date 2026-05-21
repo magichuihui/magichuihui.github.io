@@ -66,10 +66,12 @@
     addCommand('help',     cmdHelp,    'Show this help message');
     addCommand('ls',       cmdLs,      'List blog posts (use -l for detail, -a for all)');
     addCommand('cat',      cmdCat,     'Read a post: cat <number> or cat <title>');
-    addCommand('open',     cmdCat,     'Alias for cat');
+    addCommand('open',     cmdCat,     'Open a post: open <number> or open <title>');
     addCommand('search',   cmdSearch,  'Search blog posts: search <query>');
     addCommand('tags',     cmdTags,    'List all tags');
     addCommand('tag',      cmdTag,     'Show posts by tag: tag <name>');
+    addCommand('random',   cmdRandom,  'Open a random post');
+    addCommand('latest',   cmdLatest,  'Open the latest post');
     addCommand('about',    cmdAbout,   'About this site');
     addCommand('skills',   cmdSkills,  'Show tech stack');
     addCommand('whoami',   cmdWhoami,  'Display user info');
@@ -86,7 +88,6 @@
     addCommand('clear',    cmdClear,   'Clear the terminal');
     addCommand('banner',   cmdBanner,  'Display the startup banner');
     addCommand('exit',     cmdExit,    'Exit terminal to standard view');
-    addCommand('help',     cmdHelp,    'Show this help message');
     addCommand('man',      cmdHelp,    'Alias for help');
   }
 
@@ -318,7 +319,7 @@
     var names = Object.keys(term.commands).sort();
     var seen = {};
     names.forEach(function (n) {
-      if (seen[n] || n === 'open' || n === 'man') return;
+      if (seen[n] || n === 'man') return;
       seen[n] = true;
       var d = term.commands[n].desc || '';
       addOutput('  ' + padRight(n, 10) + '  ' + d);
@@ -445,6 +446,25 @@
       a.click();
       document.body.removeChild(a);
     }
+  }
+
+  /* ===== COMMAND: random ===== */
+  function cmdRandom() {
+    if (!term.posts.length) {
+      addOutput('No posts available.', 'amber');
+      return;
+    }
+    var idx = Math.floor(Math.random() * term.posts.length);
+    openPost(term.posts[idx]);
+  }
+
+  /* ===== COMMAND: latest ===== */
+  function cmdLatest() {
+    if (!term.posts.length) {
+      addOutput('No posts available.', 'amber');
+      return;
+    }
+    openPost(term.posts[0]);
   }
 
   /* ===== COMMAND: search ===== */
