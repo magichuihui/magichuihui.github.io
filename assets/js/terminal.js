@@ -67,13 +67,13 @@
   function registerCommands() {
     addCommand('help',     cmdHelp,    'Show this help message');
     addCommand('ls',       cmdLs,      'List blog posts (use -l for detail, -a for all)');
-    addCommand('cat',      cmdCat,     'Read a post: cat <number> or cat <title>');
-    addCommand('open',     cmdCat,     'Open a post: open <number> or open <title>');
-    addCommand('search',   cmdSearch,  'Search blog posts: search <query>');
+    addCommand('cat',      cmdCat,     'cat <n> | cat <title> — open a post');
+    addCommand('open',     cmdCat,     'open <n> | open <title> — alias for cat');
+    addCommand('search',   cmdSearch,  'search <query> — search blog posts');
     addCommand('tags',     cmdTags,    'List all tags');
-    addCommand('tag',      cmdTag,     'Show posts by tag: tag <name>');
-    addCommand('random',   cmdRandom,  'Open a random post');
-    addCommand('latest',   cmdLatest,  'Open the latest post');
+    addCommand('tag',      cmdTag,     'tag <name> — show posts by tag');
+    addCommand('random',   cmdRandom,  'Show a random post (preview)');
+    addCommand('latest',   cmdLatest,  'Show the newest post (preview)');
     addCommand('about',    cmdAbout,   'About this site');
     addCommand('skills',   cmdSkills,  'Show tech stack');
     addCommand('whoami',   cmdWhoami,  'Display user info');
@@ -378,8 +378,9 @@
     });
     addOutput('');
     addOutput('Navigation tips:', 'cyan bold');
-    addOutput('  Use ↑/↓ for command history, Tab for auto-complete.');
-    addOutput('  Click post titles or type cat <number> to open a post.');
+    addOutput('  Use ↑/↓ for history, Tab for auto-complete.');
+    addOutput('  Click post titles or type cat <number> to open.');
+    addOutput('  Pipe commands: random | open, latest | cat');
     addOutput('  Type \'exit\' to switch to the standard view.');
     addOutput('  Click the power button (⏻) in the title bar to exit.');
   }
@@ -518,7 +519,7 @@
         + '<span class="terminal-post-date">' + (p.date || '') + '</span>',
         'green bold'
       );
-      addOutput('Use cat ' + (idx + 1) + ' to open, or random | open for auto-open.', 'dim');
+      addOutput('Use cat ' + (idx + 1) + ' to open, or pipe to open (see help).', 'dim');
       setTimeout(bindPostClicks, 50);
     }
   }
@@ -540,7 +541,7 @@
         + '<span class="terminal-post-date">' + (p.date || '') + '</span>',
         'green bold'
       );
-      addOutput('Use cat 1 to open, or latest | open for auto-open.', 'dim');
+      addOutput('Use cat 1 to open, or pipe to open (see help).', 'dim');
       setTimeout(bindPostClicks, 50);
     }
   }
