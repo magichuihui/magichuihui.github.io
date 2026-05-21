@@ -541,22 +541,18 @@
     }
     addOutput('Posts tagged "' + args + '" (' + matching.length + '):', 'green bold');
     addOutput('');
-    matching.forEach(function (p, i) {
+    matching.forEach(function (p) {
+      var globalIdx = term.posts.indexOf(p) + 1;
       addOutputRaw(
-        '  <span class="terminal-post-idx">' + (i + 1) + '.</span>'
-        + '<a class="terminal-post-title" data-url="' + escHtml(p.url) + '">'
+        '  <span class="terminal-post-idx">' + padRight(String(globalIdx), 3) + '</span>'
+        + '<a class="terminal-post-title" data-idx="' + globalIdx + '">'
         + escHtml(p.title) + '</a>'
         + '<span class="terminal-post-date">' + (p.date || '') + '</span>'
       );
     });
-    setTimeout(function () {
-      var links = term.screen.querySelectorAll('.terminal-post-title[data-url]');
-      for (var k = 0; k < links.length; k++) {
-        links[k].addEventListener('click', function () {
-          openUrlNewTab(this.getAttribute('data-url'));
-        });
-      }
-    }, 50);
+    addOutput('');
+    addOutput('Use cat <number> to open a post, or click above.', 'dim');
+    setTimeout(bindPostClicks, 50);
   }
 
   /* ===== COMMAND: about ===== */
