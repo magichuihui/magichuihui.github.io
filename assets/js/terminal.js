@@ -59,11 +59,6 @@
     registerCommands();
     bindEvents();
     bootSequence();
-
-    // Non-homepage: terminal starts hidden, undo body scroll lock
-    if (term.overlay.classList.contains('hidden')) {
-      document.body.style.overflow = '';
-    }
   }
 
   /* ===== COMMAND SYSTEM ===== */
