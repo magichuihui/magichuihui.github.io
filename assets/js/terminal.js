@@ -929,7 +929,7 @@
 
       for (var i = 0; i < g.enemies.length; i++) {
         var e = g.enemies[i];
-        if (e.y >= 0) grid[e.y][e.x] = '*';
+        if (e.y >= 0) grid[e.y][e.x] = e.char;
       }
 
       for (var i = 0; i < g.enemyBullets.length; i++) {
@@ -967,16 +967,29 @@
       if (g.frame % g.spawnRate === 0) {
         for (var i = 0; i < 2; i++) {
           if (g.enemies.length < 12) {
-            g.enemies.push({ x: 1 + Math.floor(Math.random() * (W - 2)), y: 1 });
+            var r = Math.random();
+            var type = r < 0.50 ? { char: '*', interval: 3, fireChance: 0.05 }
+                     : r < 0.80 ? { char: 'o', interval: 5, fireChance: 0 }
+                     :            { char: '+', interval: 3, fireChance: 0.03 };
+            g.enemies.push({
+              x: 1 + Math.floor(Math.random() * (W - 2)),
+              y: 1,
+              char: type.char,
+              interval: type.interval,
+              fireChance: type.fireChance,
+              moveCounter: 0,
+              dir: Math.random() < 0.5 ? 1 : -1
+            });
           }
         }
         g.spawnRate = Math.max(18, 40 - Math.floor(g.frame / 150) * 3);
       }
 
-      if (g.frame % 3 === 0 && g.enemyBullets.length < 15) {
+      if (g.enemyBullets.length < 15) {
         for (var i = 0; i < g.enemies.length; i++) {
-          if (Math.random() < 0.05) {
-            g.enemyBullets.push({ x: g.enemies[i].x, y: g.enemies[i].y + 1 });
+          var e = g.enemies[i];
+          if (e.fireChance > 0 && g.frame % e.interval === 0 && Math.random() < e.fireChance) {
+            g.enemyBullets.push({ x: e.x, y: e.y + 1 });
           }
         }
       }
@@ -986,10 +999,17 @@
         if (g.bullets[i].y < 0) { g.bullets.splice(i, 1); continue; }
       }
 
-      if (g.frame % 3 === 0) {
-        for (var i = g.enemies.length - 1; i >= 0; i--) {
-          g.enemies[i].y++;
-          if (g.enemies[i].y >= H) { g.enemies.splice(i, 1); continue; }
+      for (var i = g.enemies.length - 1; i >= 0; i--) {
+        var e = g.enemies[i];
+        e.moveCounter++;
+        if (e.moveCounter >= e.interval) {
+          e.moveCounter = 0;
+          e.y++;
+          if (e.char === '+') {
+            e.x += e.dir;
+            if (e.x <= 0 || e.x >= W - 1) e.dir *= -1;
+          }
+          if (e.y >= H) { g.enemies.splice(i, 1); continue; }
         }
       }
 
