@@ -16,7 +16,8 @@
     site: {},
     exitBtn: null,
     pipeActive: false,
-    pipeBuffer: null
+    pipeBuffer: null,
+    gameActive: false
   };
 
   /* ===== DATA ===== */
@@ -90,6 +91,7 @@
     addCommand('clear',    cmdClear,   'Clear the terminal');
     addCommand('banner',   cmdBanner,  'Display the startup banner');
     addCommand('exit',     cmdExit,    'Exit terminal to standard view');
+    addCommand('play',     cmdPlay,    'Play a space shooter game');
     addCommand('man',      cmdHelp,    'Alias for help');
   }
 
@@ -874,6 +876,191 @@
     str = String(str);
     while (str.length < len) str += ' ';
     return str;
+  }
+
+  /* ===== GAME: SPACE SHOOTER ===== */
+  function cmdPlay() {
+    if (term.gameActive) {
+      addOutput('Game already running.', 'amber');
+      return;
+    }
+    if (!term.posts.length) {
+      addOutput('No posts loaded.', 'amber');
+      return;
+    }
+    term.gameActive = true;
+    var savedHTML = term.screen.innerHTML;
+    var inputLine = document.getElementById('terminal-input-line');
+    var savedInputDisplay = inputLine.style.display;
+    inputLine.style.display = 'none';
+    term.input.disabled = true;
+
+    var W = 44, H = 18;
+    var g = {
+      px: 20, py: H - 2,
+      bullets: [],
+      enemies: [],
+      score: 0,
+      frame: 0,
+      keys: {},
+      running: true,
+      spawnRate: 25
+    };
+
+    function render() {
+      var grid = [];
+      for (var y = 0; y < H; y++) {
+        grid[y] = new Array(W);
+        for (var x = 0; x < W; x++) grid[y][x] = ' ';
+      }
+
+      // Player: /^\ 
+      grid[g.py][g.px] = '^';
+      if (g.px - 1 >= 0) grid[g.py + 1][g.px - 1] = '/';
+      if (g.px + 1 < W) grid[g.py + 1][g.px + 1] = '\\';
+
+      for (var i = 0; i < g.bullets.length; i++) {
+        var b = g.bullets[i];
+        if (b.y >= 0) grid[b.y][b.x] = '|';
+      }
+
+      for (var i = 0; i < g.enemies.length; i++) {
+        var e = g.enemies[i];
+        if (e.y >= 0) grid[e.y][e.x] = '*';
+      }
+
+      var out = '<pre style="color:var(--terminal-green);line-height:1.1;font-size:0.72rem;font-family:monospace;margin:0">';
+      out += '<span style="color:var(--terminal-amber)">┌──────────┬──────┐</span>\n';
+      out += '<span style="color:var(--terminal-amber)">│</span> SCORE: ' + padRight(String(g.score), 5) + ' <span style="color:var(--terminal-amber)">│</span> WAVE: ' + padRight(String(Math.floor(g.frame / 300) + 1), 3) + ' <span style="color:var(--terminal-amber)">│</span>\n';
+      out += '<span style="color:var(--terminal-amber)">├──────────┴──────┤</span>\n';
+      for (var y = 0; y < H; y++) {
+        out += '<span style="color:var(--terminal-amber)">│</span>' + grid[y].join('') + '<span style="color:var(--terminal-amber)">│</span>\n';
+      }
+      out += '<span style="color:var(--terminal-amber)">└──────────────────────────────────────────┘</span>\n';
+      out += '<span style="color:var(--terminal-comment)"> [←][→] move  [space] shoot  [q] quit</span>';
+      out += '</pre>';
+      term.screen.innerHTML = out;
+      scrollBottom();
+    }
+
+    function update() {
+      if (g.keys['ArrowLeft'] || g.keys['a']) g.px = Math.max(1, g.px - 1);
+      if (g.keys['ArrowRight'] || g.keys['d']) g.px = Math.min(W - 2, g.px + 1);
+
+      if ((g.keys[' '] || g.keys['j']) && g.frame % 8 === 0) {
+        g.bullets.push({ x: g.px, y: g.py - 1 });
+      }
+
+      if (g.frame % g.spawnRate === 0) {
+        var num = 1 + Math.floor(Math.random() * Math.min(3, 1 + Math.floor(g.frame / 200)));
+        for (var i = 0; i < num; i++) {
+          if (g.enemies.length < 15) {
+            g.enemies.push({ x: 1 + Math.floor(Math.random() * (W - 2)), y: 1 });
+          }
+        }
+        g.spawnRate = Math.max(10, 25 - Math.floor(g.frame / 100) * 3);
+      }
+
+      for (var i = g.bullets.length - 1; i >= 0; i--) {
+        g.bullets[i].y--;
+        if (g.bullets[i].y < 0) { g.bullets.splice(i, 1); continue; }
+      }
+
+      for (var i = g.enemies.length - 1; i >= 0; i--) {
+        g.enemies[i].y++;
+        if (g.enemies[i].y >= H) { g.enemies.splice(i, 1); continue; }
+      }
+
+      for (var i = g.bullets.length - 1; i >= 0; i--) {
+        var hit = false;
+        for (var j = g.enemies.length - 1; j >= 0; j--) {
+          if (Math.abs(g.bullets[i].x - g.enemies[j].x) <= 1 && Math.abs(g.bullets[i].y - g.enemies[j].y) <= 1) {
+            g.bullets.splice(i, 1);
+            g.enemies.splice(j, 1);
+            g.score += 10;
+            hit = true;
+            break;
+          }
+        }
+        if (hit) continue;
+      }
+
+      for (var i = g.enemies.length - 1; i >= 0; i--) {
+        var e = g.enemies[i];
+        if (Math.abs(e.x - g.px) <= 1 && e.y >= g.py) {
+          return false;
+        }
+      }
+
+      g.frame++;
+      return true;
+    }
+
+    function gameOver() {
+      g.running = false;
+      var out = '<pre style="color:var(--terminal-amber);line-height:1.8;font-size:0.85rem;text-align:center;font-family:monospace">';
+      out += '\n\n';
+      out += '   ██████   █████  ███    ███ ███████     ██████  ██    ██ ███████ ██████  \n';
+      out += '  ██       ██   ██ ████  ████ ██         ██    ██ ██    ██ ██      ██   ██ \n';
+      out += '  ██   ███ ███████ ██ ████ ██ █████      ██    ██ ██    ██ █████   ██████  \n';
+      out += '  ██    ██ ██   ██ ██  ██  ██ ██         ██    ██  ██  ██  ██      ██   ██ \n';
+      out += '   ██████  ██   ██ ██      ██ ███████     ██████    ████   ███████ ██   ██ \n';
+      out += '\n';
+      out += '  <span style="color:var(--terminal-green)">Final Score: ' + g.score + '</span>\n';
+      out += '  Press any key to return to terminal\n';
+      out += '</pre>';
+      term.screen.innerHTML = out;
+      scrollBottom();
+      document.addEventListener('keydown', function _waitKey() {
+        document.removeEventListener('keydown', _waitKey);
+        cleanup();
+      });
+    }
+
+    function onKeyDown(e) {
+      if (e.key === 'q' || e.key === 'Q') {
+        cleanup();
+        e.preventDefault();
+        return;
+      }
+      g.keys[e.key] = true;
+      if (['ArrowLeft', 'ArrowRight', ' ', 'a', 'd', 'j'].indexOf(e.key) !== -1) {
+        e.preventDefault();
+      }
+    }
+
+    function onKeyUp(e) {
+      g.keys[e.key] = false;
+    }
+
+    function cleanup() {
+      if (!term.gameActive) return;
+      term.gameActive = false;
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('keyup', onKeyUp);
+      if (interval) { clearInterval(interval); interval = null; }
+
+      term.screen.innerHTML = savedHTML;
+      term.screen.style.overflow = '';
+      inputLine.style.display = savedInputDisplay;
+      term.input.disabled = false;
+      addOutput('Exited game. Score: ' + g.score, 'green');
+      scrollBottom();
+      term.input.focus();
+    }
+
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
+
+    term.screen.style.overflow = 'hidden';
+    render();
+
+    var interval = setInterval(function () {
+      if (!g.running) return;
+      var alive = update();
+      render();
+      if (!alive) { gameOver(); }
+    }, 80);
   }
 
   /* ===== BOOT ===== */
