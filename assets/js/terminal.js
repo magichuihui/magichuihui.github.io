@@ -944,10 +944,10 @@
     }
 
     function update() {
-      if (g.keys['ArrowLeft'] || g.keys['a']) g.px = Math.max(1, g.px - 1);
-      if (g.keys['ArrowRight'] || g.keys['d']) g.px = Math.min(W - 2, g.px + 1);
+      if (g.keys['ArrowLeft'] || g.keys['a']) g.px = Math.max(1, g.px - 2);
+      if (g.keys['ArrowRight'] || g.keys['d']) g.px = Math.min(W - 2, g.px + 2);
 
-      if ((g.keys[' '] || g.keys['j']) && g.frame % 8 === 0) {
+      if ((g.keys[' '] || g.keys['j']) && g.frame % 4 === 0) {
         g.bullets.push({ x: g.px, y: g.py - 1 });
       }
 
@@ -965,7 +965,7 @@
         if (g.bullets[i].y < 0) { g.bullets.splice(i, 1); continue; }
       }
 
-      if (g.frame % 2 === 0) {
+      if (g.frame % 3 === 0) {
         for (var i = g.enemies.length - 1; i >= 0; i--) {
           g.enemies[i].y++;
           if (g.enemies[i].y >= H) { g.enemies.splice(i, 1); continue; }
