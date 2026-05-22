@@ -929,14 +929,17 @@
         if (e.y >= 0) grid[e.y][e.x] = '*';
       }
 
+      var dashes = new Array(45).join('─');
       var out = '<pre style="color:var(--terminal-green);line-height:1.1;font-size:0.72rem;font-family:monospace;margin:0">';
-      out += '<span style="color:var(--terminal-amber)">┌──────────┬──────┐</span>\n';
-      out += '<span style="color:var(--terminal-amber)">│</span> SCORE: ' + padRight(String(g.score), 5) + ' <span style="color:var(--terminal-amber)">│</span> WAVE: ' + padRight(String(Math.floor(g.frame / 300) + 1), 3) + ' <span style="color:var(--terminal-amber)">│</span>\n';
-      out += '<span style="color:var(--terminal-amber)">├──────────┴──────┤</span>\n';
+      out += '<span style="color:var(--terminal-amber)">┌' + dashes + '┐</span>\n';
+      var scoreLine = '  SCORE: ' + padRight(String(g.score), 5) + '  WAVE: ' + padRight(String(Math.floor(g.frame / 300) + 1), 3);
+      while (scoreLine.length < 44) scoreLine += ' ';
+      out += '<span style="color:var(--terminal-amber)">│</span>' + scoreLine + '<span style="color:var(--terminal-amber)">│</span>\n';
+      out += '<span style="color:var(--terminal-amber)">├' + dashes + '┤</span>\n';
       for (var y = 0; y < H; y++) {
         out += '<span style="color:var(--terminal-amber)">│</span>' + grid[y].join('') + '<span style="color:var(--terminal-amber)">│</span>\n';
       }
-      out += '<span style="color:var(--terminal-amber)">└──────────────────────────────────────────┘</span>\n';
+      out += '<span style="color:var(--terminal-amber)">└' + dashes + '┘</span>\n';
       out += '<span style="color:var(--terminal-comment)"> [←][→] move  [space] shoot  [q] quit</span>';
       out += '</pre>';
       term.screen.innerHTML = out;
