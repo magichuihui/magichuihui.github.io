@@ -1103,6 +1103,7 @@
 
     function gameOver() {
       g.running = false;
+      if (interval) { clearInterval(interval); interval = null; }
       var out = '<pre style="color:var(--terminal-amber);line-height:1.8;font-size:0.85rem;text-align:center;font-family:monospace">';
       out += '\n\n';
       out += '   ██████   █████  ███    ███ ███████     ██████  ██    ██ ███████ ██████  \n';
@@ -1112,12 +1113,17 @@
       out += '   ██████  ██   ██ ██      ██ ███████     ██████    ████   ███████ ██   ██ \n';
       out += '\n';
       out += '  <span style="color:var(--terminal-green)">Final Score: ' + g.score + '</span>\n';
-      out += '  Press any key to return to terminal\n';
+      out += '  Press any key to skip — auto-return in 8s\n';
       out += '</pre>';
       term.screen.innerHTML = out;
       scrollBottom();
+      var returnTimer = setTimeout(function () {
+        document.removeEventListener('keydown', _waitKey);
+        cleanup();
+      }, 8000);
       document.addEventListener('keydown', function _waitKey() {
         document.removeEventListener('keydown', _waitKey);
+        clearTimeout(returnTimer);
         cleanup();
       });
     }
