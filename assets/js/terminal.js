@@ -953,7 +953,8 @@
       bullets: [], enemies: [], enemyBullets: [],
       hp: 5, invincible: 0, score: 0, frame: 0,
       keys: {}, running: true,
-      spawnCounter: 45, wave: 1, waveFlash: 0, won: false
+      spawnCounter: 45, wave: 1, waveFlash: 0, won: false,
+      touchActive: false, touchX: null, doubleTap: false
     };
 
     function spaces(n) {
@@ -1038,12 +1039,24 @@
         return false;
       }
 
-      // Player movement
-      if (g.keys['ArrowLeft'] || g.keys['a']) g.px = Math.max(1, g.px - 2);
-      if (g.keys['ArrowRight'] || g.keys['d']) g.px = Math.min(W - 2, g.px + 2);
+      // Player movement (touch drag takes priority)
+      if (g.touchActive && g.touchX !== null) {
+        var screenW = window.innerWidth || 375;
+        var target = Math.round((g.touchX / screenW) * (W - 2)) + 1;
+        if (target > g.px) g.px = Math.min(W - 2, g.px + 4);
+        else if (target < g.px) g.px = Math.max(1, g.px - 4);
+      } else {
+        if (g.keys['ArrowLeft'] || g.keys['a']) g.px = Math.max(1, g.px - 2);
+        if (g.keys['ArrowRight'] || g.keys['d']) g.px = Math.min(W - 2, g.px + 2);
+      }
 
-      // Fire (every 3 frames)
-      if ((g.keys[' '] || g.keys['j']) && g.frame % 3 === 0) {
+      // Fire (keyboard or double-tap)
+      var shouldFire = (g.keys[' '] || g.keys['j']) && g.frame % 3 === 0;
+      if (g.doubleTap) {
+        shouldFire = true;
+        g.doubleTap = false;
+      }
+      if (shouldFire) {
         g.bullets.push({ x: g.px, y: g.py - 1 });
       }
 
@@ -1289,38 +1302,45 @@
       term.input.focus();
     }
 
-    // Touch controls
-    var touchKeys = { left: 'ArrowLeft', right: 'ArrowRight', center: ' ' };
-    function onPointerStart(e) {
-      var pt = e.changedTouches ? e.changedTouches[0] : e;
-      var rect = term.screen.getBoundingClientRect();
-      var relX = (pt.clientX - rect.left) / rect.width;
-      g.keys[touchKeys.left] = relX < 0.35;
-      g.keys[touchKeys.right] = relX > 0.65;
-      g.keys[touchKeys.center] = relX >= 0.35 && relX <= 0.65;
+    // Touch controls: drag to move, double-tap to shoot
+    var touchData = { lastTap: 0 };
+    function onTouchStart(e) {
+      var now = Date.now();
+      if (now - touchData.lastTap < 350) {
+        g.doubleTap = true;
+        touchData.lastTap = 0;
+      } else {
+        touchData.lastTap = now;
+      }
+      var t = e.changedTouches[0];
+      g.touchActive = true;
+      g.touchX = t.clientX;
       e.preventDefault();
     }
-    function onPointerEnd(e) {
-      g.keys[touchKeys.left] = false;
-      g.keys[touchKeys.right] = false;
-      g.keys[touchKeys.center] = false;
+    function onTouchMove(e) {
+      e.preventDefault();
+      var t = e.changedTouches[0];
+      g.touchX = t.clientX;
+      g.touchActive = true;
+    }
+    function onTouchEnd(e) {
+      g.touchActive = false;
+      g.touchX = null;
       e.preventDefault();
     }
     function addTouchHandlers() {
       var el = term.screen;
-      el.addEventListener('touchstart', onPointerStart, { passive: false });
-      el.addEventListener('touchend', onPointerEnd, { passive: false });
-      el.addEventListener('touchcancel', onPointerEnd, { passive: false });
-      el.addEventListener('mousedown', onPointerStart);
-      el.addEventListener('mouseup', onPointerEnd);
+      el.addEventListener('touchstart', onTouchStart, { passive: false });
+      el.addEventListener('touchmove', onTouchMove, { passive: false });
+      el.addEventListener('touchend', onTouchEnd, { passive: false });
+      el.addEventListener('touchcancel', onTouchEnd, { passive: false });
     }
     function removeTouchHandlers() {
       var el = term.screen;
-      el.removeEventListener('touchstart', onPointerStart);
-      el.removeEventListener('touchend', onPointerEnd);
-      el.removeEventListener('touchcancel', onPointerEnd);
-      el.removeEventListener('mousedown', onPointerStart);
-      el.removeEventListener('mouseup', onPointerEnd);
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove', onTouchMove);
+      el.removeEventListener('touchend', onTouchEnd);
+      el.removeEventListener('touchcancel', onTouchEnd);
     }
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
       addTouchHandlers();
