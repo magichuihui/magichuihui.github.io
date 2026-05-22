@@ -900,6 +900,9 @@
       px: 20, py: H - 2,
       bullets: [],
       enemies: [],
+      enemyBullets: [],
+      hp: 5,
+      invincible: 0,
       score: 0,
       frame: 0,
       keys: {},
@@ -929,10 +932,17 @@
         if (e.y >= 0) grid[e.y][e.x] = '*';
       }
 
+      for (var i = 0; i < g.enemyBullets.length; i++) {
+        var eb = g.enemyBullets[i];
+        if (eb.y >= 0 && eb.y < H) grid[eb.y][eb.x] = 'v';
+      }
+
       var dashes = new Array(45).join('─');
       var out = '<pre style="color:var(--terminal-green);line-height:1.1;font-size:0.72rem;font-family:monospace;margin:0">';
       out += '<span style="color:var(--terminal-amber)">┌' + dashes + '┐</span>\n';
-      var scoreLine = '  SCORE: ' + padRight(String(g.score), 5) + '  WAVE: ' + padRight(String(Math.floor(g.frame / 300) + 1), 3);
+      var hpStr = '';
+      for (var i = 0; i < 5; i++) hpStr += i < g.hp ? '♥' : '·';
+      var scoreLine = '  HP: ' + hpStr + '  SCORE: ' + padRight(String(g.score), 5) + '  WAVE: ' + padRight(String(Math.floor(g.frame / 300) + 1), 3);
       while (scoreLine.length < 44) scoreLine += ' ';
       out += '<span style="color:var(--terminal-amber)">│</span>' + scoreLine + '<span style="color:var(--terminal-amber)">│</span>\n';
       out += '<span style="color:var(--terminal-amber)">├' + dashes + '┤</span>\n';
@@ -963,6 +973,14 @@
         g.spawnRate = Math.max(18, 40 - Math.floor(g.frame / 150) * 3);
       }
 
+      if (g.frame % 3 === 0 && g.enemyBullets.length < 15) {
+        for (var i = 0; i < g.enemies.length; i++) {
+          if (Math.random() < 0.05) {
+            g.enemyBullets.push({ x: g.enemies[i].x, y: g.enemies[i].y + 1 });
+          }
+        }
+      }
+
       for (var i = g.bullets.length - 1; i >= 0; i--) {
         g.bullets[i].y--;
         if (g.bullets[i].y < 0) { g.bullets.splice(i, 1); continue; }
@@ -973,6 +991,11 @@
           g.enemies[i].y++;
           if (g.enemies[i].y >= H) { g.enemies.splice(i, 1); continue; }
         }
+      }
+
+      for (var i = g.enemyBullets.length - 1; i >= 0; i--) {
+        g.enemyBullets[i].y++;
+        if (g.enemyBullets[i].y >= H) { g.enemyBullets.splice(i, 1); }
       }
 
       for (var i = g.bullets.length - 1; i >= 0; i--) {
@@ -989,12 +1012,32 @@
         if (hit) continue;
       }
 
+      if (g.invincible <= 0) {
+        for (var i = g.enemyBullets.length - 1; i >= 0; i--) {
+          var eb = g.enemyBullets[i];
+          if (Math.abs(eb.x - g.px) <= 1 && eb.y >= g.py) {
+            g.enemyBullets.splice(i, 1);
+            g.hp--;
+            g.invincible = 15;
+            if (g.hp <= 0) return false;
+            break;
+          }
+        }
+      }
+
       for (var i = g.enemies.length - 1; i >= 0; i--) {
         var e = g.enemies[i];
         if (Math.abs(e.x - g.px) <= 1 && e.y >= g.py) {
-          return false;
+          g.enemies.splice(i, 1);
+          if (g.invincible <= 0) {
+            g.hp--;
+            g.invincible = 15;
+            if (g.hp <= 0) return false;
+          }
         }
       }
+
+      if (g.invincible > 0) g.invincible--;
 
       g.frame++;
       return true;
