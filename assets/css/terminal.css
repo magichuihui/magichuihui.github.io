@@ -351,6 +351,75 @@
   margin-top: 2px;
 }
 
+/* ===== GAME TOUCH CONTROLS (mobile only) ===== */
+.game-touch-controls {
+  display: none;
+  position: absolute;
+  bottom: 50px;
+  left: 0;
+  right: 0;
+  padding: 8px 20px;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.game-touch-controls.active {
+  display: flex;
+  pointer-events: auto;
+}
+
+.touch-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid var(--terminal-border);
+  background: rgba(255,255,255,0.06);
+  color: var(--terminal-text);
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+}
+
+.touch-btn:active,
+.touch-btn.pressed {
+  background: rgba(255,255,255,0.18);
+  border-color: var(--terminal-green);
+  transform: scale(0.92);
+}
+
+.touch-fire {
+  width: 76px;
+  height: 76px;
+  border-color: var(--terminal-red);
+  color: var(--terminal-red);
+  font-size: 1.6rem;
+}
+
+.touch-fire:active,
+.touch-fire.pressed {
+  border-color: #ff4444;
+  background: rgba(255,60,60,0.15);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .game-touch-controls.active {
+    display: none;
+  }
+}
+
+/* Prevent scroll during game on mobile */
+.terminal-screen.game-active {
+  touch-action: none;
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 576px) {
   .terminal-screen {

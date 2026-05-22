@@ -153,7 +153,7 @@
     lines.push({ text: '', cls: '', delay: 30 });
     ASCII_BANNER.forEach(function (l) { lines.push({ text: l, cls: 'ascii', delay: 15 }); });
     lines.push({ text: '  Welcome to ' + (term.site.title || 'Kyra\'s home') + ' — ' + (term.site.url || 'blog.amyinfo.com'), cls: 'green bold', delay: 60 });
-    lines.push({ text: '  Type \'help\' for available commands. Type \'exit\' for standard view.', cls: 'dim', delay: 50 });
+    lines.push({ text: '  Try: ls, open <n>, search <query>, play. Type \'help\' for all commands.', cls: 'dim', delay: 50 });
     lines.push({ text: '', cls: '', delay: 30 });
 
     typeLines(lines, 0, function () {
@@ -851,6 +851,7 @@
       }
     });
     addOutput('Welcome back!', 'green');
+    addOutput('Try: ls, open &lt;n&gt;, search &lt;query&gt;, play. Type help for all commands.', 'dim');
   }
 
   /* ===== UTILITIES ===== */
@@ -982,6 +983,17 @@
             });
           }
         }
+        if (Math.random() < 0.3 && g.enemies.length < 12) {
+          g.enemies.push({
+            x: Math.max(1, Math.min(W - 2, g.px)),
+            y: 1,
+            char: '*',
+            interval: 3,
+            fireChance: 0.05,
+            moveCounter: 0,
+            dir: 0
+          });
+        }
         g.spawnRate = Math.max(18, 40 - Math.floor(g.frame / 150) * 3);
       }
 
@@ -989,7 +1001,7 @@
         for (var i = 0; i < g.enemies.length; i++) {
           var e = g.enemies[i];
           if (e.fireChance > 0 && g.frame % e.interval === 0 && Math.random() < e.fireChance) {
-            g.enemyBullets.push({ x: e.x, y: e.y + 1 });
+            g.enemyBullets.push({ x: e.x, y: e.y + 1, track: Math.random() < 0.25 });
           }
         }
       }
@@ -1014,8 +1026,13 @@
       }
 
       for (var i = g.enemyBullets.length - 1; i >= 0; i--) {
-        g.enemyBullets[i].y++;
-        if (g.enemyBullets[i].y >= H) { g.enemyBullets.splice(i, 1); }
+        var eb = g.enemyBullets[i];
+        eb.y++;
+        if (eb.track) {
+          if (eb.x < g.px) eb.x++;
+          else if (eb.x > g.px) eb.x--;
+        }
+        if (eb.y >= H) { g.enemyBullets.splice(i, 1); }
       }
 
       for (var i = g.bullets.length - 1; i >= 0; i--) {
@@ -1105,10 +1122,20 @@
       term.gameActive = false;
       document.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('keyup', onKeyUp);
+      if (touchCtrl) {
+        touchCtrl.classList.remove('active');
+        var btns = touchCtrl.querySelectorAll('.touch-btn');
+        for (var i = 0; i < btns.length; i++) {
+          btns[i].removeEventListener('touchstart', onTouchStart);
+          btns[i].removeEventListener('touchend', onTouchEnd);
+          btns[i].removeEventListener('touchcancel', onTouchEnd);
+        }
+      }
       if (interval) { clearInterval(interval); interval = null; }
 
       term.screen.innerHTML = savedHTML;
       term.screen.style.overflow = '';
+      term.screen.classList.remove('game-active');
       inputLine.style.display = savedInputDisplay;
       term.input.disabled = false;
       addOutput('Exited game. Score: ' + g.score, 'green');
@@ -1116,10 +1143,34 @@
       term.input.focus();
     }
 
+    var touchCtrl = document.getElementById('game-touch-controls');
+    function onTouchStart(e) {
+      var btn = e.currentTarget;
+      g.keys[btn.getAttribute('data-key')] = true;
+      btn.classList.add('pressed');
+      e.preventDefault();
+    }
+    function onTouchEnd(e) {
+      var btn = e.currentTarget;
+      g.keys[btn.getAttribute('data-key')] = false;
+      btn.classList.remove('pressed');
+      e.preventDefault();
+    }
+    if (touchCtrl && ('ontouchstart' in window || navigator.maxTouchPoints > 0)) {
+      touchCtrl.classList.add('active');
+      var btns = touchCtrl.querySelectorAll('.touch-btn');
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].addEventListener('touchstart', onTouchStart, { passive: false });
+        btns[i].addEventListener('touchend', onTouchEnd, { passive: false });
+        btns[i].addEventListener('touchcancel', onTouchEnd, { passive: false });
+      }
+    }
+
     document.addEventListener('keydown', onKeyDown);
     document.addEventListener('keyup', onKeyUp);
 
     term.screen.style.overflow = 'hidden';
+    term.screen.classList.add('game-active');
     render();
 
     var interval = setInterval(function () {
