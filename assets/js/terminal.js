@@ -993,32 +993,20 @@
         if (eb.y >= 0 && eb.y < H) grid[eb.y][eb.x] = 'v';
       }
 
-      // Countdown overlay (center of grid)
-      if (g.countdown > 0) {
-        var cdText = g.countdown > 36 ? '3'
-                   : g.countdown > 24 ? '2'
-                   : g.countdown > 12 ? '1'
-                   : 'GO!';
-        var blink = g.countdown <= 12 && g.countdown % 4 < 2;
-        if (!blink) {
-          var cdY = Math.floor(H / 2) - 1;
-          var cdX = Math.floor((W - cdText.length) / 2);
-          for (var c = 0; c < cdText.length; c++) {
-            if (cdY >= 0 && cdY < H && cdX + c >= 0 && cdX + c < W) {
-              grid[cdY][cdX + c] = cdText[c];
-            }
-          }
-        }
-      }
-
       var dashes = new Array(W + 1).join('─');
       var out = '<pre style="color:var(--terminal-green);line-height:1.1;font-size:0.72rem;font-family:monospace;margin:0">';
 
       // Top border
       out += '<span style="color:var(--terminal-amber)">┌' + dashes + '┐</span>\n';
 
-      // HUD line or wave announcement
-      if (g.waveFlash > 0) {
+      if (g.countdown > 0) {
+        var cdText = g.countdown > 36 ? '3'
+                   : g.countdown > 24 ? '2'
+                   : g.countdown > 12 ? '1'
+                   : 'GO!';
+        var cdStr = g.countdown <= 12 && g.countdown % 4 < 2 ? '' : cdText;
+        out += '<span style="color:var(--terminal-amber)">│</span>' + spaces(W) + '<span style="color:var(--terminal-amber)">│</span>\n';
+      } else if (g.waveFlash > 0) {
         var wl = '═══ ' + WAVES[Math.min(g.wave - 1, 9)].label + ' ═══';
         var pad = Math.max(0, W - wl.length);
         var lpad = Math.floor(pad / 2);
@@ -1041,7 +1029,21 @@
       // Separator + grid
       out += '<span style="color:var(--terminal-amber)">├' + dashes + '┤</span>\n';
       for (var y = 0; y < H; y++) {
-        out += '<span style="color:var(--terminal-amber)">│</span>' + grid[y].join('') + '<span style="color:var(--terminal-amber)">│</span>\n';
+        out += '<span style="color:var(--terminal-amber)">│</span>';
+        if (g.countdown > 0) {
+          if (y === Math.floor(H / 2) - 1) {
+            var bigPad = spaces(Math.floor((W - cdText.length * 2) / 2));
+            out += bigPad
+                 + '<span style="font-size:1.5rem;color:var(--terminal-cyan);font-weight:bold">' + cdStr + '</span>';
+            var trail = Math.max(0, W - bigPad.length - cdText.length * 2);
+            if (trail > 0) out += spaces(trail);
+          } else {
+            out += grid[y].join('');
+          }
+        } else {
+          out += grid[y].join('');
+        }
+        out += '<span style="color:var(--terminal-amber)">│</span>\n';
       }
       out += '<span style="color:var(--terminal-amber)">└' + dashes + '┘</span>\n';
       out += '<span style="color:var(--terminal-comment)"> [←][→] move  [space] shoot  [q] quit</span>';
