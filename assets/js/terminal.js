@@ -917,20 +917,50 @@
     inputLine.style.display = 'none';
     term.input.disabled = true;
 
-    var W = 44, H = 18;
-    var g = {
-      px: 20, py: H - 2,
-      bullets: [],
-      enemies: [],
-      enemyBullets: [],
-      hp: 5,
-      invincible: 0,
-      score: 0,
-      frame: 0,
-      keys: {},
-      running: true,
-      spawnRate: 40
+    var W = 50, H = 20;
+    var WAVE_LENGTH = 280;
+    var WIN_FRAME = 10 * WAVE_LENGTH;
+
+    var ET = {
+      'o': { char: 'o', interval: 5, fireChance: 0, hp: 1 },
+      '*': { char: '*', interval: 3, fireChance: 0.05, hp: 1 },
+      '+': { char: '+', interval: 3, fireChance: 0.03, hp: 1, zigzag: true },
+      '#': { char: '#', interval: 4, fireChance: 0.08, hp: 2 },
+      '$': { char: '$', interval: 2, fireChance: 0, hp: 1 },
+      '@': { char: '@', interval: 6, fireChance: 0.15, hp: 1, trackBullet: true }
     };
+
+    var WAVES = [
+      { types: ['o','o','o','*'],       spawnRate: 48, maxE: 6,  fireM: 0,   trackC: 0,   targetC: 0,   label: 'Drifters' },
+      { types: ['o','*','*','+'],       spawnRate: 44, maxE: 8,  fireM: 0.5, trackC: 0,   targetC: 0.1, label: 'Scouts' },
+      { types: ['+','+','*','o'],       spawnRate: 40, maxE: 10, fireM: 0.7, trackC: 0,   targetC: 0.1, label: 'Zigzag' },
+      { types: ['*','#','+','o'],       spawnRate: 36, maxE: 10, fireM: 1,   trackC: 0.1, targetC: 0.15, label: 'Heavy' },
+      { types: ['$','$','*','#','+'],   spawnRate: 32, maxE: 14, fireM: 1,   trackC: 0.15, targetC: 0.2, label: 'Swarm' },
+      { types: ['@','*','#','$','+'],   spawnRate: 28, maxE: 16, fireM: 1.1, trackC: 0.2, targetC: 0.2, label: 'Snipers' },
+      { types: ['@','#','$','+','*'],   spawnRate: 24, maxE: 18, fireM: 1.2, trackC: 0.25, targetC: 0.25, label: 'Elite' },
+      { types: ['@','@','#','$','+'],   spawnRate: 20, maxE: 20, fireM: 1.3, trackC: 0.3, targetC: 0.3, label: 'Assault' },
+      { types: ['@','#','$','@','*'],   spawnRate: 18, maxE: 22, fireM: 1.4, trackC: 0.4, targetC: 0.35, label: 'Annihilation' },
+      { types: ['@','#','$','@','#'],   spawnRate: 16, maxE: 24, fireM: 1.5, trackC: 0.5, targetC: 0.5, label: 'Final Stand' }
+    ];
+
+    function getWave(frame) {
+      var idx = Math.min(9, Math.floor(frame / WAVE_LENGTH));
+      return { num: idx + 1, cfg: WAVES[idx] };
+    }
+
+    var g = {
+      px: Math.floor(W / 2), py: H - 2,
+      bullets: [], enemies: [], enemyBullets: [],
+      hp: 5, invincible: 0, score: 0, frame: 0,
+      keys: {}, running: true,
+      spawnCounter: 0, wave: 1, waveFlash: 0, won: false
+    };
+
+    function spaces(n) {
+      var s = '';
+      for (var i = 0; i < n; i++) s += ' ';
+      return s;
+    }
 
     function render() {
       var grid = [];
@@ -939,10 +969,12 @@
         for (var x = 0; x < W; x++) grid[y][x] = ' ';
       }
 
-      // Player: /^\ 
-      grid[g.py][g.px] = '^';
-      if (g.px - 1 >= 0) grid[g.py + 1][g.px - 1] = '/';
-      if (g.px + 1 < W) grid[g.py + 1][g.px + 1] = '\\';
+      // Player (flashes when invincible)
+      if (g.invincible <= 0 || Math.floor(g.invincible / 3) % 2 === 0) {
+        grid[g.py][g.px] = '^';
+        if (g.px - 1 >= 0) grid[g.py + 1][g.px - 1] = '/';
+        if (g.px + 1 < W) grid[g.py + 1][g.px + 1] = '\\';
+      }
 
       for (var i = 0; i < g.bullets.length; i++) {
         var b = g.bullets[i];
@@ -951,7 +983,7 @@
 
       for (var i = 0; i < g.enemies.length; i++) {
         var e = g.enemies[i];
-        if (e.y >= 0) grid[e.y][e.x] = e.char;
+        if (e.y >= 0 && e.y < H) grid[e.y][e.x] = e.char;
       }
 
       for (var i = 0; i < g.enemyBullets.length; i++) {
@@ -959,14 +991,34 @@
         if (eb.y >= 0 && eb.y < H) grid[eb.y][eb.x] = 'v';
       }
 
-      var dashes = new Array(45).join('─');
+      var dashes = new Array(W + 1).join('─');
       var out = '<pre style="color:var(--terminal-green);line-height:1.1;font-size:0.72rem;font-family:monospace;margin:0">';
+
+      // Top border
       out += '<span style="color:var(--terminal-amber)">┌' + dashes + '┐</span>\n';
-      var hpStr = '';
-      for (var i = 0; i < 5; i++) hpStr += i < g.hp ? '♥' : '·';
-      var scoreLine = '  HP: ' + hpStr + '  SCORE: ' + padRight(String(g.score), 5) + '  WAVE: ' + padRight(String(Math.floor(g.frame / 300) + 1), 3);
-      while (scoreLine.length < 44) scoreLine += ' ';
-      out += '<span style="color:var(--terminal-amber)">│</span>' + scoreLine + '<span style="color:var(--terminal-amber)">│</span>\n';
+
+      // HUD line or wave announcement
+      if (g.waveFlash > 0) {
+        var wl = '═══ ' + WAVES[Math.min(g.wave - 1, 9)].label + ' ═══';
+        var pad = Math.max(0, W - wl.length);
+        var lpad = Math.floor(pad / 2);
+        out += '<span style="color:var(--terminal-amber)">│</span>' + spaces(lpad)
+             + '<span style="color:var(--terminal-cyan);font-weight:bold">' + wl + '</span>'
+             + spaces(pad - lpad) + '<span style="color:var(--terminal-amber)">│</span>\n';
+        g.waveFlash--;
+      } else {
+        var hpStr = '';
+        for (var i = 0; i < 5; i++) hpStr += i < g.hp ? '♥' : '·';
+        var hpColor = g.hp <= 2 ? 'var(--terminal-red)' : 'var(--terminal-green)';
+        var plain = '  ' + hpStr + '  SCORE: ' + g.score + '  WAVE: ' + g.wave;
+        var pad = Math.max(0, W - plain.length);
+        out += '<span style="color:var(--terminal-amber)">│</span>'
+             + '  <span style="color:' + hpColor + '">' + hpStr + '</span>'
+             + '  SCORE: ' + g.score + '  WAVE: ' + g.wave + spaces(pad)
+             + '<span style="color:var(--terminal-amber)">│</span>\n';
+      }
+
+      // Separator + grid
       out += '<span style="color:var(--terminal-amber)">├' + dashes + '┤</span>\n';
       for (var y = 0; y < H; y++) {
         out += '<span style="color:var(--terminal-amber)">│</span>' + grid[y].join('') + '<span style="color:var(--terminal-amber)">│</span>\n';
@@ -979,66 +1031,111 @@
     }
 
     function update() {
+      // Win check: survived all waves!
+      if (g.frame >= WIN_FRAME && !g.won) {
+        g.won = true;
+        g.running = false;
+        return false;
+      }
+
+      // Player movement
       if (g.keys['ArrowLeft'] || g.keys['a']) g.px = Math.max(1, g.px - 2);
       if (g.keys['ArrowRight'] || g.keys['d']) g.px = Math.min(W - 2, g.px + 2);
 
-      if ((g.keys[' '] || g.keys['j']) && g.frame % 4 === 0) {
+      // Fire (every 3 frames)
+      if ((g.keys[' '] || g.keys['j']) && g.frame % 3 === 0) {
         g.bullets.push({ x: g.px, y: g.py - 1 });
       }
 
-      if (g.frame % g.spawnRate === 0) {
-        for (var i = 0; i < 2; i++) {
-          if (g.enemies.length < 12) {
-            var r = Math.random();
-            var type = r < 0.50 ? { char: '*', interval: 3, fireChance: 0.05 }
-                     : r < 0.80 ? { char: 'o', interval: 5, fireChance: 0 }
-                     :            { char: '+', interval: 3, fireChance: 0.03 };
-            g.enemies.push({
-              x: 1 + Math.floor(Math.random() * (W - 2)),
-              y: 1,
-              char: type.char,
-              interval: type.interval,
-              fireChance: type.fireChance,
-              moveCounter: 0,
-              dir: Math.random() < 0.5 ? 1 : -1
-            });
-          }
+      // Wave transition detection
+      var wi = getWave(g.frame);
+      if (wi.num !== g.wave) {
+        g.wave = wi.num;
+        g.waveFlash = 40;
+        // Heal 1 HP on wave transition (capped at 5)
+        if (g.hp < 5) g.hp++;
+      }
+
+      var cfg = wi.cfg;
+
+      // Spawn enemies
+      g.spawnCounter++;
+      if (g.spawnCounter >= cfg.spawnRate) {
+        g.spawnCounter = 0;
+        // Swarm waves spawn in groups of 3
+        var hasSwarm = false;
+        for (var si = 0; si < cfg.types.length; si++) {
+          if (cfg.types[si] === '$') { hasSwarm = true; break; }
         }
-        if (Math.random() < 0.3 && g.enemies.length < 12) {
+        var spawnCount = hasSwarm ? 3 : 2;
+
+        for (var si = 0; si < spawnCount; si++) {
+          if (g.enemies.length >= cfg.maxE) break;
+          var typeKey = cfg.types[Math.floor(Math.random() * cfg.types.length)];
+          var tpl = ET[typeKey];
+          g.enemies.push({
+            x: 1 + Math.floor(Math.random() * (W - 2)),
+            y: 1,
+            char: tpl.char,
+            interval: tpl.interval,
+            fireChance: tpl.fireChance,
+            hp: tpl.hp,
+            maxHp: tpl.hp,
+            moveCounter: 0,
+            dir: Math.random() < 0.5 ? 1 : -1,
+            zigzag: !!tpl.zigzag,
+            trackBullet: !!tpl.trackBullet
+          });
+        }
+
+        // Targeted spawn above player
+        if (Math.random() < cfg.targetC && g.enemies.length < cfg.maxE) {
+          var tk = cfg.types[Math.floor(Math.random() * cfg.types.length)];
+          var t2 = ET[tk];
           g.enemies.push({
             x: Math.max(1, Math.min(W - 2, g.px)),
             y: 1,
-            char: '*',
-            interval: 3,
-            fireChance: 0.05,
+            char: t2.char,
+            interval: t2.interval,
+            fireChance: t2.fireChance,
+            hp: t2.hp,
+            maxHp: t2.hp,
             moveCounter: 0,
-            dir: 0
+            dir: 0,
+            zigzag: !!t2.zigzag,
+            trackBullet: !!t2.trackBullet
           });
         }
-        g.spawnRate = Math.max(18, 40 - Math.floor(g.frame / 150) * 3);
       }
 
+      // Enemy bullets
       if (g.enemyBullets.length < 15) {
         for (var i = 0; i < g.enemies.length; i++) {
           var e = g.enemies[i];
-          if (e.fireChance > 0 && g.frame % e.interval === 0 && Math.random() < e.fireChance) {
-            g.enemyBullets.push({ x: e.x, y: e.y + 1, track: Math.random() < 0.25 });
+          var adjFire = e.fireChance * cfg.fireM;
+          if (adjFire > 0 && g.frame % e.interval === 0 && Math.random() < adjFire) {
+            g.enemyBullets.push({
+              x: e.x, y: e.y + 1,
+              track: e.trackBullet || (Math.random() < cfg.trackC)
+            });
           }
         }
       }
 
+      // Move player bullets
       for (var i = g.bullets.length - 1; i >= 0; i--) {
         g.bullets[i].y--;
         if (g.bullets[i].y < 0) { g.bullets.splice(i, 1); continue; }
       }
 
+      // Move enemies
       for (var i = g.enemies.length - 1; i >= 0; i--) {
         var e = g.enemies[i];
         e.moveCounter++;
         if (e.moveCounter >= e.interval) {
           e.moveCounter = 0;
           e.y++;
-          if (e.char === '+') {
+          if (e.zigzag) {
             e.x += e.dir;
             if (e.x <= 0 || e.x >= W - 1) e.dir *= -1;
           }
@@ -1046,6 +1143,7 @@
         }
       }
 
+      // Move enemy bullets
       for (var i = g.enemyBullets.length - 1; i >= 0; i--) {
         var eb = g.enemyBullets[i];
         eb.y++;
@@ -1056,13 +1154,18 @@
         if (eb.y >= H) { g.enemyBullets.splice(i, 1); }
       }
 
+      // Bullet-enemy collision (multi-HP support)
       for (var i = g.bullets.length - 1; i >= 0; i--) {
         var hit = false;
         for (var j = g.enemies.length - 1; j >= 0; j--) {
-          if (Math.abs(g.bullets[i].x - g.enemies[j].x) <= 1 && Math.abs(g.bullets[i].y - g.enemies[j].y) <= 1) {
+          var e = g.enemies[j];
+          if (Math.abs(g.bullets[i].x - e.x) <= 1 && Math.abs(g.bullets[i].y - e.y) <= 1) {
             g.bullets.splice(i, 1);
-            g.enemies.splice(j, 1);
-            g.score += 10;
+            e.hp--;
+            if (e.hp <= 0) {
+              g.enemies.splice(j, 1);
+              g.score += e.maxHp === 2 ? 20 : 10;
+            }
             hit = true;
             break;
           }
@@ -1070,6 +1173,7 @@
         if (hit) continue;
       }
 
+      // Player hit by enemy bullet
       if (g.invincible <= 0) {
         for (var i = g.enemyBullets.length - 1; i >= 0; i--) {
           var eb = g.enemyBullets[i];
@@ -1077,12 +1181,13 @@
             g.enemyBullets.splice(i, 1);
             g.hp--;
             g.invincible = 15;
-            if (g.hp <= 0) return false;
+            if (g.hp <= 0) { g.running = false; return false; }
             break;
           }
         }
       }
 
+      // Player collision with enemy
       for (var i = g.enemies.length - 1; i >= 0; i--) {
         var e = g.enemies[i];
         if (Math.abs(e.x - g.px) <= 1 && e.y >= g.py) {
@@ -1090,29 +1195,25 @@
           if (g.invincible <= 0) {
             g.hp--;
             g.invincible = 15;
-            if (g.hp <= 0) return false;
+            if (g.hp <= 0) { g.running = false; return false; }
           }
         }
       }
 
       if (g.invincible > 0) g.invincible--;
-
       g.frame++;
       return true;
     }
 
-    function gameOver() {
-      g.running = false;
+    function showEndScreen(title, asciiLines, subline) {
       if (interval) { clearInterval(interval); interval = null; }
       var out = '<pre style="color:var(--terminal-amber);line-height:1.8;font-size:0.85rem;text-align:center;font-family:monospace">';
       out += '\n\n';
-      out += '   ██████   █████  ███    ███ ███████     ██████  ██    ██ ███████ ██████  \n';
-      out += '  ██       ██   ██ ████  ████ ██         ██    ██ ██    ██ ██      ██   ██ \n';
-      out += '  ██   ███ ███████ ██ ████ ██ █████      ██    ██ ██    ██ █████   ██████  \n';
-      out += '  ██    ██ ██   ██ ██  ██  ██ ██         ██    ██  ██  ██  ██      ██   ██ \n';
-      out += '   ██████  ██   ██ ██      ██ ███████     ██████    ████   ███████ ██   ██ \n';
+      for (var li = 0; li < asciiLines.length; li++) {
+        out += '  ' + asciiLines[li] + '\n';
+      }
       out += '\n';
-      out += '  <span style="color:var(--terminal-green)">Final Score: ' + g.score + '</span>\n';
+      out += '  <span style="color:var(--terminal-green)">' + subline + '</span>\n';
       out += '  Press any key to skip — auto-return in 8s\n';
       out += '</pre>';
       term.screen.innerHTML = out;
@@ -1126,6 +1227,32 @@
         clearTimeout(returnTimer);
         cleanup();
       });
+    }
+
+    var YOU_WIN_ART = [
+      '██╗   ██╗ ██████╗ ██╗   ██╗    ██╗    ██╗██╗███╗   ██╗',
+      '██║   ██║██╔═══██╗██║   ██║    ██║    ██║██║████╗  ██║',
+      '██║   ██║██║   ██║██║   ██║    ██║ █╗ ██║██║██╔██╗ ██║',
+      '╚██╗ ██╔╝██║   ██║██║   ██║    ██║███╗██║██║██║╚██╗██║',
+      ' ╚████╔╝ ╚██████╔╝╚██████╔╝    ╚███╔███╔╝██║██║ ╚████║',
+      '  ╚═══╝   ╚═════╝  ╚═════╝      ╚══╝╚══╝ ╚═╝╚═╝  ╚═══╝'
+    ];
+    var GAME_OVER_ART = [
+      ' ██████   █████  ███    ███ ███████     ██████  ██    ██ ███████ ██████  ',
+      '██       ██   ██ ████  ████ ██         ██    ██ ██    ██ ██      ██   ██ ',
+      '██   ███ ███████ ██ ████ ██ █████      ██    ██ ██    ██ █████   ██████  ',
+      '██    ██ ██   ██ ██  ██  ██ ██         ██    ██  ██  ██  ██      ██   ██ ',
+      ' ██████  ██   ██ ██      ██ ███████     ██████    ████   ███████ ██   ██ '
+    ];
+
+    function showWin() {
+      showEndScreen('You Win!', YOU_WIN_ART,
+        '★ Final Score: ' + g.score + ' ★  All ' + g.wave + ' waves cleared!');
+    }
+
+    function gameOver() {
+      showEndScreen('Game Over', GAME_OVER_ART,
+        'Final Score: ' + g.score + ' (reached wave ' + g.wave + ')');
     }
 
     function onKeyDown(e) {
@@ -1162,7 +1289,7 @@
       term.input.focus();
     }
 
-    // Touch controls: tap left/right/center of screen
+    // Touch controls
     var touchKeys = { left: 'ArrowLeft', right: 'ArrowRight', center: ' ' };
     function onPointerStart(e) {
       var pt = e.changedTouches ? e.changedTouches[0] : e;
@@ -1210,7 +1337,10 @@
       if (!g.running) return;
       var alive = update();
       render();
-      if (!alive) { gameOver(); }
+      if (!alive) {
+        if (g.won) showWin();
+        else gameOver();
+      }
     }, 80);
   }
 
