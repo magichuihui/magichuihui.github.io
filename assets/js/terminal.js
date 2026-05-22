@@ -17,7 +17,8 @@
     exitBtn: null,
     pipeActive: false,
     pipeBuffer: null,
-    gameActive: false
+    gameActive: false,
+    inactivityTimer: null
   };
 
   /* ===== DATA ===== */
@@ -62,6 +63,28 @@
     registerCommands();
     bindEvents();
     bootSequence();
+    startInactivityWatch();
+  }
+
+  /* ===== INACTIVITY WATCH (auto-open terminal on post pages) ===== */
+  function startInactivityWatch() {
+    if (term.overlay && !term.overlay.classList.contains('hidden')) return;
+    var delay = 10 * 60 * 1000;
+    function resetTimer() {
+      if (!term.overlay.classList.contains('hidden')) return;
+      if (term.inactivityTimer) clearTimeout(term.inactivityTimer);
+      term.inactivityTimer = setTimeout(function () {
+        if (term.overlay.classList.contains('hidden')) {
+          enterTerminalMode();
+          addOutput('Terminal auto-opened after inactivity.', 'dim');
+        }
+      }, delay);
+    }
+    var events = ['mousemove', 'scroll', 'keydown', 'click', 'touchstart'];
+    for (var i = 0; i < events.length; i++) {
+      document.addEventListener(events[i], resetTimer, { passive: true });
+    }
+    resetTimer();
   }
 
   /* ===== COMMAND SYSTEM ===== */
@@ -1122,15 +1145,7 @@
       term.gameActive = false;
       document.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('keyup', onKeyUp);
-      if (touchCtrl) {
-        touchCtrl.classList.remove('active');
-        var btns = touchCtrl.querySelectorAll('.touch-btn');
-        for (var i = 0; i < btns.length; i++) {
-          btns[i].removeEventListener('touchstart', onTouchStart);
-          btns[i].removeEventListener('touchend', onTouchEnd);
-          btns[i].removeEventListener('touchcancel', onTouchEnd);
-        }
-      }
+      removeTouchHandlers();
       if (interval) { clearInterval(interval); interval = null; }
 
       term.screen.innerHTML = savedHTML;
@@ -1143,27 +1158,41 @@
       term.input.focus();
     }
 
-    var touchCtrl = document.getElementById('game-touch-controls');
-    function onTouchStart(e) {
-      var btn = e.currentTarget;
-      g.keys[btn.getAttribute('data-key')] = true;
-      btn.classList.add('pressed');
+    // Touch controls: tap left/right/center of screen
+    var touchKeys = { left: 'ArrowLeft', right: 'ArrowRight', center: ' ' };
+    function onPointerStart(e) {
+      var pt = e.changedTouches ? e.changedTouches[0] : e;
+      var rect = term.screen.getBoundingClientRect();
+      var relX = (pt.clientX - rect.left) / rect.width;
+      g.keys[touchKeys.left] = relX < 0.35;
+      g.keys[touchKeys.right] = relX > 0.65;
+      g.keys[touchKeys.center] = relX >= 0.35 && relX <= 0.65;
       e.preventDefault();
     }
-    function onTouchEnd(e) {
-      var btn = e.currentTarget;
-      g.keys[btn.getAttribute('data-key')] = false;
-      btn.classList.remove('pressed');
+    function onPointerEnd(e) {
+      g.keys[touchKeys.left] = false;
+      g.keys[touchKeys.right] = false;
+      g.keys[touchKeys.center] = false;
       e.preventDefault();
     }
-    if (touchCtrl && ('ontouchstart' in window || navigator.maxTouchPoints > 0)) {
-      touchCtrl.classList.add('active');
-      var btns = touchCtrl.querySelectorAll('.touch-btn');
-      for (var i = 0; i < btns.length; i++) {
-        btns[i].addEventListener('touchstart', onTouchStart, { passive: false });
-        btns[i].addEventListener('touchend', onTouchEnd, { passive: false });
-        btns[i].addEventListener('touchcancel', onTouchEnd, { passive: false });
-      }
+    function addTouchHandlers() {
+      var el = term.screen;
+      el.addEventListener('touchstart', onPointerStart, { passive: false });
+      el.addEventListener('touchend', onPointerEnd, { passive: false });
+      el.addEventListener('touchcancel', onPointerEnd, { passive: false });
+      el.addEventListener('mousedown', onPointerStart);
+      el.addEventListener('mouseup', onPointerEnd);
+    }
+    function removeTouchHandlers() {
+      var el = term.screen;
+      el.removeEventListener('touchstart', onPointerStart);
+      el.removeEventListener('touchend', onPointerEnd);
+      el.removeEventListener('touchcancel', onPointerEnd);
+      el.removeEventListener('mousedown', onPointerStart);
+      el.removeEventListener('mouseup', onPointerEnd);
+    }
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+      addTouchHandlers();
     }
 
     document.addEventListener('keydown', onKeyDown);
