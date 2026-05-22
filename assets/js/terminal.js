@@ -953,7 +953,7 @@
       bullets: [], enemies: [], enemyBullets: [],
       hp: 5, invincible: 0, score: 0, frame: 0,
       keys: {}, running: true,
-      spawnCounter: 0, wave: 1, waveFlash: 0, won: false
+      spawnCounter: 45, wave: 1, waveFlash: 0, won: false
     };
 
     function spaces(n) {
