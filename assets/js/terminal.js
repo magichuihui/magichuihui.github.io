@@ -996,17 +996,18 @@
       var dashes = new Array(W + 1).join('─');
       var out = '<pre style="color:var(--terminal-green);line-height:1.1;font-size:0.72rem;font-family:monospace;margin:0">';
 
-      // Top border
-      out += '<span style="color:var(--terminal-amber)">┌' + dashes + '┐</span>\n';
-
       if (g.countdown > 0) {
         var cdText = g.countdown > 36 ? '3'
                    : g.countdown > 24 ? '2'
                    : g.countdown > 12 ? '1'
                    : 'GO!';
-        var cdStr = g.countdown <= 12 && g.countdown % 4 < 2 ? '' : cdText;
-        out += '<span style="color:var(--terminal-amber)">│</span>' + spaces(W) + '<span style="color:var(--terminal-amber)">│</span>\n';
-      } else if (g.waveFlash > 0) {
+        var cdBlink = g.countdown <= 12 && g.countdown % 4 < 2;
+      }
+
+      // Top border
+      out += '<span style="color:var(--terminal-amber)">┌' + dashes + '┐</span>\n';
+
+      if (g.waveFlash > 0) {
         var wl = '═══ ' + WAVES[Math.min(g.wave - 1, 9)].label + ' ═══';
         var pad = Math.max(0, W - wl.length);
         var lpad = Math.floor(pad / 2);
@@ -1030,13 +1031,16 @@
       out += '<span style="color:var(--terminal-amber)">├' + dashes + '┤</span>\n';
       for (var y = 0; y < H; y++) {
         out += '<span style="color:var(--terminal-amber)">│</span>';
-        if (g.countdown > 0) {
-          if (y === Math.floor(H / 2) - 1) {
-            var bigPad = spaces(Math.floor((W - cdText.length * 2) / 2));
-            out += bigPad
-                 + '<span style="font-size:1.5rem;color:var(--terminal-cyan);font-weight:bold">' + cdStr + '</span>';
-            var trail = Math.max(0, W - bigPad.length - cdText.length * 2);
-            if (trail > 0) out += spaces(trail);
+        if (g.countdown > 0 && !cdBlink) {
+          var cdBoxW = cdText.length + 4;
+          var cdTopY = Math.floor(H / 2) - 1;
+          var cdLeft = Math.floor((W - cdBoxW) / 2);
+          if (y === cdTopY) {
+            out += spaces(cdLeft) + '╔' + new Array(cdBoxW - 1).join('═') + '╗' + spaces(Math.max(0, W - cdLeft - cdBoxW));
+          } else if (y === cdTopY + 1) {
+            out += spaces(cdLeft) + '║ ' + cdText + ' ║' + spaces(Math.max(0, W - cdLeft - cdBoxW));
+          } else if (y === cdTopY + 2) {
+            out += spaces(cdLeft) + '╚' + new Array(cdBoxW - 1).join('═') + '╝' + spaces(Math.max(0, W - cdLeft - cdBoxW));
           } else {
             out += grid[y].join('');
           }
