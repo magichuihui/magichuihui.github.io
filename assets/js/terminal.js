@@ -904,7 +904,7 @@
       frame: 0,
       keys: {},
       running: true,
-      spawnRate: 25
+      spawnRate: 40
     };
 
     function render() {
@@ -952,13 +952,12 @@
       }
 
       if (g.frame % g.spawnRate === 0) {
-        var num = 1 + Math.floor(Math.random() * Math.min(3, 1 + Math.floor(g.frame / 200)));
-        for (var i = 0; i < num; i++) {
-          if (g.enemies.length < 15) {
+        for (var i = 0; i < 2; i++) {
+          if (g.enemies.length < 12) {
             g.enemies.push({ x: 1 + Math.floor(Math.random() * (W - 2)), y: 1 });
           }
         }
-        g.spawnRate = Math.max(10, 25 - Math.floor(g.frame / 100) * 3);
+        g.spawnRate = Math.max(18, 40 - Math.floor(g.frame / 150) * 3);
       }
 
       for (var i = g.bullets.length - 1; i >= 0; i--) {
@@ -966,9 +965,11 @@
         if (g.bullets[i].y < 0) { g.bullets.splice(i, 1); continue; }
       }
 
-      for (var i = g.enemies.length - 1; i >= 0; i--) {
-        g.enemies[i].y++;
-        if (g.enemies[i].y >= H) { g.enemies.splice(i, 1); continue; }
+      if (g.frame % 2 === 0) {
+        for (var i = g.enemies.length - 1; i >= 0; i--) {
+          g.enemies[i].y++;
+          if (g.enemies[i].y >= H) { g.enemies.splice(i, 1); continue; }
+        }
       }
 
       for (var i = g.bullets.length - 1; i >= 0; i--) {
