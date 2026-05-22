@@ -68,10 +68,8 @@
 
   /* ===== INACTIVITY WATCH (auto-open terminal on post pages) ===== */
   function startInactivityWatch() {
-    if (term.overlay && !term.overlay.classList.contains('hidden')) return;
     var delay = 10 * 60 * 1000;
     function resetTimer() {
-      if (!term.overlay.classList.contains('hidden')) return;
       if (term.inactivityTimer) clearTimeout(term.inactivityTimer);
       term.inactivityTimer = setTimeout(function () {
         if (term.overlay.classList.contains('hidden')) {
