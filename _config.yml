@@ -293,6 +293,8 @@ exclude:
   - LICENSE
   - README.md
   - screenshot.png
+  - vendor
+  - .bundle
   - docs/
 
 plugins:
