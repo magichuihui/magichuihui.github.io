@@ -954,8 +954,9 @@
       hp: 5, invincible: 0, score: 0, frame: 0,
       keys: {}, running: true,
       spawnCounter: 45, wave: 1, waveFlash: 0, won: false,
-      touchActive: false, touchX: null
+      autoFire: false, swipeDir: null
     };
+    g.autoFire = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
     function spaces(n) {
       var s = '';
@@ -1039,19 +1040,14 @@
         return false;
       }
 
-      // Player movement (touch drag takes priority)
-      if (g.touchActive && g.touchX !== null) {
-        var screenW = window.innerWidth || 375;
-        var target = Math.round((g.touchX / screenW) * (W - 2)) + 1;
-        if (target > g.px) g.px = Math.min(W - 2, g.px + 4);
-        else if (target < g.px) g.px = Math.max(1, g.px - 4);
-      } else {
-        if (g.keys['ArrowLeft'] || g.keys['a']) g.px = Math.max(1, g.px - 2);
-        if (g.keys['ArrowRight'] || g.keys['d']) g.px = Math.min(W - 2, g.px + 2);
-      }
+      // Player movement (swipe on mobile, keys on desktop)
+      if (g.swipeDir === 'left') g.px = Math.max(1, g.px - 3);
+      else if (g.swipeDir === 'right') g.px = Math.min(W - 2, g.px + 3);
+      else if (g.keys['ArrowLeft'] || g.keys['a']) g.px = Math.max(1, g.px - 2);
+      else if (g.keys['ArrowRight'] || g.keys['d']) g.px = Math.min(W - 2, g.px + 2);
 
       // Fire (keyboard or auto-fire on touch)
-      if ((g.keys[' '] || g.keys['j'] || g.touchActive) && g.frame % 3 === 0) {
+      if ((g.keys[' '] || g.keys['j'] || g.autoFire) && g.frame % 3 === 0) {
         g.bullets.push({ x: g.px, y: g.py - 1 });
       }
 
@@ -1298,22 +1294,20 @@
       term.input.focus();
     }
 
-    // Touch controls: drag to move, auto-fire while touching
+    // Touch controls: swipe left/right to move, auto-fire
+    var touchStartX = 0;
     function onTouchStart(e) {
-      var t = e.changedTouches[0];
-      g.touchActive = true;
-      g.touchX = t.clientX;
+      touchStartX = e.changedTouches[0].clientX;
       e.preventDefault();
     }
     function onTouchMove(e) {
+      var dx = e.changedTouches[0].clientX - touchStartX;
+      if (dx > 12) g.swipeDir = 'right';
+      else if (dx < -12) g.swipeDir = 'left';
       e.preventDefault();
-      var t = e.changedTouches[0];
-      g.touchX = t.clientX;
-      g.touchActive = true;
     }
     function onTouchEnd(e) {
-      g.touchActive = false;
-      g.touchX = null;
+      g.swipeDir = null;
       e.preventDefault();
     }
     function addTouchHandlers() {
