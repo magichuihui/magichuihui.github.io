@@ -954,7 +954,7 @@
       hp: 5, invincible: 0, score: 0, frame: 0,
       keys: {}, running: true,
       spawnCounter: 45, wave: 1, waveFlash: 0, won: false,
-      touchActive: false, touchX: null, doubleTap: false
+      touchActive: false, touchX: null
     };
 
     function spaces(n) {
@@ -1050,13 +1050,8 @@
         if (g.keys['ArrowRight'] || g.keys['d']) g.px = Math.min(W - 2, g.px + 2);
       }
 
-      // Fire (keyboard or double-tap)
-      var shouldFire = (g.keys[' '] || g.keys['j']) && g.frame % 3 === 0;
-      if (g.doubleTap) {
-        shouldFire = true;
-        g.doubleTap = false;
-      }
-      if (shouldFire) {
+      // Fire (keyboard or auto-fire on touch)
+      if ((g.keys[' '] || g.keys['j'] || g.touchActive) && g.frame % 3 === 0) {
         g.bullets.push({ x: g.px, y: g.py - 1 });
       }
 
@@ -1231,15 +1226,16 @@
       out += '</pre>';
       term.screen.innerHTML = out;
       scrollBottom();
-      var returnTimer = setTimeout(function () {
-        document.removeEventListener('keydown', _waitKey);
-        cleanup();
-      }, 8000);
-      document.addEventListener('keydown', function _waitKey() {
-        document.removeEventListener('keydown', _waitKey);
+      function waitKey() {
+        document.removeEventListener('keydown', waitKey);
         clearTimeout(returnTimer);
         cleanup();
-      });
+      }
+      var returnTimer = setTimeout(function () {
+        document.removeEventListener('keydown', waitKey);
+        cleanup();
+      }, 8000);
+      document.addEventListener('keydown', waitKey);
     }
 
     var YOU_WIN_ART = [
@@ -1302,16 +1298,8 @@
       term.input.focus();
     }
 
-    // Touch controls: drag to move, double-tap to shoot
-    var touchData = { lastTap: 0 };
+    // Touch controls: drag to move, auto-fire while touching
     function onTouchStart(e) {
-      var now = Date.now();
-      if (now - touchData.lastTap < 350) {
-        g.doubleTap = true;
-        touchData.lastTap = 0;
-      } else {
-        touchData.lastTap = now;
-      }
       var t = e.changedTouches[0];
       g.touchActive = true;
       g.touchX = t.clientX;
