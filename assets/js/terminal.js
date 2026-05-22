@@ -954,7 +954,7 @@
       hp: 5, invincible: 0, score: 0, frame: 0,
       keys: {}, running: true,
       spawnCounter: 45, wave: 1, waveFlash: 0, won: false,
-      autoFire: false, swipeDir: null
+      autoFire: false, swipeDir: null, countdown: 48
     };
     g.autoFire = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
@@ -991,6 +991,24 @@
       for (var i = 0; i < g.enemyBullets.length; i++) {
         var eb = g.enemyBullets[i];
         if (eb.y >= 0 && eb.y < H) grid[eb.y][eb.x] = 'v';
+      }
+
+      // Countdown overlay (center of grid)
+      if (g.countdown > 0) {
+        var cdText = g.countdown > 36 ? '3'
+                   : g.countdown > 24 ? '2'
+                   : g.countdown > 12 ? '1'
+                   : 'GO!';
+        var blink = g.countdown <= 12 && g.countdown % 4 < 2;
+        if (!blink) {
+          var cdY = Math.floor(H / 2) - 1;
+          var cdX = Math.floor((W - cdText.length) / 2);
+          for (var c = 0; c < cdText.length; c++) {
+            if (cdY >= 0 && cdY < H && cdX + c >= 0 && cdX + c < W) {
+              grid[cdY][cdX + c] = cdText[c];
+            }
+          }
+        }
       }
 
       var dashes = new Array(W + 1).join('─');
@@ -1336,6 +1354,11 @@
     render();
 
     var interval = setInterval(function () {
+      if (g.countdown > 0) {
+        render();
+        g.countdown--;
+        return;
+      }
       if (!g.running) return;
       var alive = update();
       render();
