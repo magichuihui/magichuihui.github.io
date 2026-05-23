@@ -1001,14 +1001,30 @@
                    : g.countdown > 12 ? '1'
                    : 'GO!';
         var cdBlink = g.countdown <= 12 && g.countdown % 4 < 2;
+        var bigArt = {
+          '3': ['█████','    █','█████','    █','█████'],
+          '2': ['█████','    █','█████','█    ','█████'],
+          '1': ['  █  ','  █  ','  █  ','  █  ','  █  '],
+          'GO!': ['█████ █████ █','█     █   █ █','████  █   █ █','█  █  █   █   ','████  █████ █']
+        };
+        var art = bigArt[cdText];
+        if (art && !cdBlink) {
+          var artH = art.length;
+          var artW = art[0].length;
+          var startY = Math.floor((H - artH) / 2);
+          var startX = Math.floor((W - artW) / 2);
+          for (var r = 0; r < artH; r++) {
+            for (var c = 0; c < artW; c++) {
+              var gy = startY + r, gx = startX + c;
+              if (gy >= 0 && gy < H && gx >= 0 && gx < W) {
+                grid[gy][gx] = art[r][c];
+              }
+            }
+          }
+        }
       }
 
-      var out = '<pre style="color:var(--terminal-green);line-height:1.1;font-size:0.72rem;font-family:monospace;margin:0;padding:0;position:relative">';
-      if (g.countdown > 0 && !cdBlink) {
-        out += '<div style="position:absolute;left:0;top:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:5">'
-             + '<span style="font-size:3rem;color:var(--terminal-cyan);font-weight:bold;text-shadow:0 0 10px rgba(0,255,200,0.5)">' + cdText + '</span>'
-             + '</div>';
-      }
+      var out = '<pre style="color:var(--terminal-green);line-height:1.1;font-size:0.72rem;font-family:monospace;margin:0">';
 
       // Top border
       out += '<span style="color:var(--terminal-amber)">┌' + dashes + '┐</span>\n';
