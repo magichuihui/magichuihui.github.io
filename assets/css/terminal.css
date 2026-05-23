@@ -97,6 +97,7 @@
 .terminal-screen {
   flex: 1;
   overflow-y: auto;
+  position: relative;
   padding: 16px;
   font-family: "SF Mono", Monaco, "Cascadia Code", "Fira Code", "Courier New", monospace;
   font-size: 0.85rem;
