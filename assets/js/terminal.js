@@ -1251,7 +1251,13 @@
       out += '</pre>';
       term.screen.innerHTML = out;
       scrollBottom();
-      function waitKey() {
+
+      // Cooldown: ignore key events for 500ms to absorb held-key auto-repeat
+      var cooldown = true;
+      setTimeout(function () { cooldown = false; }, 500);
+
+      function waitKey(e) {
+        if (cooldown) return;
         document.removeEventListener('keydown', waitKey);
         clearTimeout(returnTimer);
         cleanup();
