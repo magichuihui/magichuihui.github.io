@@ -1030,30 +1030,20 @@
       // Separator + grid
       out += '<span style="color:var(--terminal-amber)">├' + dashes + '┤</span>\n';
       for (var y = 0; y < H; y++) {
-        out += '<span style="color:var(--terminal-amber)">│</span>';
-        if (g.countdown > 0 && !cdBlink) {
-          var cdBoxW = cdText.length + 4;
-          var cdTopY = Math.floor(H / 2) - 1;
-          var cdLeft = Math.floor((W - cdBoxW) / 2);
-          if (y === cdTopY) {
-            out += spaces(cdLeft) + '╔' + new Array(cdBoxW - 1).join('═') + '╗' + spaces(Math.max(0, W - cdLeft - cdBoxW));
-          } else if (y === cdTopY + 1) {
-            out += spaces(cdLeft) + '║ ' + cdText + ' ║' + spaces(Math.max(0, W - cdLeft - cdBoxW));
-          } else if (y === cdTopY + 2) {
-            out += spaces(cdLeft) + '╚' + new Array(cdBoxW - 1).join('═') + '╝' + spaces(Math.max(0, W - cdLeft - cdBoxW));
-          } else {
-            out += grid[y].join('');
-          }
-        } else {
-          out += grid[y].join('');
-        }
-        out += '<span style="color:var(--terminal-amber)">│</span>\n';
+        out += '<span style="color:var(--terminal-amber)">│</span>' + grid[y].join('') + '<span style="color:var(--terminal-amber)">│</span>\n';
       }
       out += '<span style="color:var(--terminal-amber)">└' + dashes + '┘</span>\n';
       out += '<span style="color:var(--terminal-comment)"> [←][→] move  [space] shoot  [q] quit</span>';
       out += '</pre>';
       term.screen.innerHTML = out;
       scrollBottom();
+
+      if (g.countdown > 0 && !cdBlink) {
+        var overlay = document.createElement('div');
+        overlay.textContent = cdText;
+        overlay.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:3rem;color:var(--terminal-cyan);font-weight:bold;font-family:monospace;z-index:10;pointer-events:none';
+        term.screen.appendChild(overlay);
+      }
     }
 
     function update() {
