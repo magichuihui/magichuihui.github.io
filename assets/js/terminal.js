@@ -994,7 +994,6 @@
       }
 
       var dashes = new Array(W + 1).join('─');
-      var out = '<pre style="color:var(--terminal-green);line-height:1.1;font-size:0.72rem;font-family:monospace;margin:0;position:relative">';
 
       if (g.countdown > 0) {
         var cdText = g.countdown > 36 ? '3'
@@ -1002,6 +1001,13 @@
                    : g.countdown > 12 ? '1'
                    : 'GO!';
         var cdBlink = g.countdown <= 12 && g.countdown % 4 < 2;
+      }
+
+      var out = '<pre style="color:var(--terminal-green);line-height:1.1;font-size:0.72rem;font-family:monospace;margin:0;padding:0;position:relative">';
+      if (g.countdown > 0 && !cdBlink) {
+        out += '<div style="position:absolute;left:0;top:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:5">'
+             + '<span style="font-size:3rem;color:var(--terminal-cyan);font-weight:bold;text-shadow:0 0 10px rgba(0,255,200,0.5)">' + cdText + '</span>'
+             + '</div>';
       }
 
       // Top border
@@ -1034,9 +1040,6 @@
       }
       out += '<span style="color:var(--terminal-amber)">└' + dashes + '┘</span>\n';
       out += '<span style="color:var(--terminal-comment)"> [←][→] move  [space] shoot  [q] quit</span>';
-      if (g.countdown > 0 && !cdBlink) {
-        out += '<span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:3rem;color:var(--terminal-cyan);font-weight:bold;text-shadow:0 0 10px rgba(0,255,200,0.5)">' + cdText + '</span>';
-      }
       out += '</pre>';
       term.screen.innerHTML = out;
       scrollBottom();
