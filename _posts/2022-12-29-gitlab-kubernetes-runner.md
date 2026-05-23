@@ -135,6 +135,7 @@ kubectl create secret generic kubeconfigs \
   --from-file=<path-to-kubeconfigs>
 ```
 
+{% raw %}
 ```yaml
 runners:
   config: |
@@ -149,9 +150,11 @@ runners:
           [runners.kubernetes.volumes.secret.items]
             "kubeconfigs" = "config"
 ```
+{% endraw %}
 
 # Final values.yaml
 
+{% raw %}
 ```yaml
 image:
   registry: registry.gitlab.com
@@ -203,3 +206,4 @@ runners:
   runUntagged: false
   secret: gitlab-runner-secret
 ```
+{% endraw %}

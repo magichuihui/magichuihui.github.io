@@ -82,6 +82,7 @@ EOF
 
 2. Create new kubernetes auth method
 
+{% raw %}
 ```bash
 export VAULT_ADDR=http://0.0.0.0:8200
 vault auth enable kubernetes
@@ -125,6 +126,7 @@ vault write auth/kubernetes/role/devweb-app2 \
      policies=devwebapp \
      ttl=24h
 ```
+{% endraw %}
 
 ## Create two exmaple applications
 
