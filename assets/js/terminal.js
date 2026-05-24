@@ -1069,10 +1069,13 @@
         return false;
       }
 
-      // Player movement (swipe on mobile, keys on desktop)
-      if (g.swipeDir === 'left') g.px = Math.max(1, g.px - 3);
-      else if (g.swipeDir === 'right') g.px = Math.min(W - 2, g.px + 3);
-      else if (g.keys['ArrowLeft'] || g.keys['a']) g.px = Math.max(1, g.px - 2);
+      // Player movement (touch on mobile, keys on desktop)
+      if (touchTargetX !== null) {
+        var diff = touchTargetX - g.px;
+        if (diff > 1) g.px = Math.min(W - 2, g.px + 2);
+        else if (diff < -1) g.px = Math.max(1, g.px - 2);
+        else g.px = touchTargetX;
+      } else if (g.keys['ArrowLeft'] || g.keys['a']) g.px = Math.max(1, g.px - 2);
       else if (g.keys['ArrowRight'] || g.keys['d']) g.px = Math.min(W - 2, g.px + 2);
 
       // Fire (keyboard or auto-fire on touch)
@@ -1329,20 +1332,22 @@
       term.input.focus();
     }
 
-    // Touch controls: swipe left/right to move, auto-fire
-    var touchStartX = 0;
+    // Touch controls: follow finger position for ship movement, auto-fire
+    var touchTargetX = null;
+    function getGridX(touch) {
+      var rect = term.screen.getBoundingClientRect();
+      return Math.max(1, Math.min(W - 2, Math.round((touch.clientX - rect.left) / rect.width * W)));
+    }
     function onTouchStart(e) {
-      touchStartX = e.changedTouches[0].clientX;
+      touchTargetX = getGridX(e.changedTouches[0]);
       e.preventDefault();
     }
     function onTouchMove(e) {
-      var dx = e.changedTouches[0].clientX - touchStartX;
-      if (dx > 12) g.swipeDir = 'right';
-      else if (dx < -12) g.swipeDir = 'left';
+      touchTargetX = getGridX(e.changedTouches[0]);
       e.preventDefault();
     }
     function onTouchEnd(e) {
-      g.swipeDir = null;
+      touchTargetX = null;
       e.preventDefault();
     }
     function addTouchHandlers() {
