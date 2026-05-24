@@ -1070,13 +1070,10 @@
       }
 
       // Player movement (touch on mobile, keys on desktop)
-      if (touchTargetX !== null) {
-        var diff = touchTargetX - g.px;
-        if (diff > 1) g.px = Math.min(W - 2, g.px + 2);
-        else if (diff < -1) g.px = Math.max(1, g.px - 2);
-        else g.px = touchTargetX;
-      } else if (g.keys['ArrowLeft'] || g.keys['a']) g.px = Math.max(1, g.px - 2);
-      else if (g.keys['ArrowRight'] || g.keys['d']) g.px = Math.min(W - 2, g.px + 2);
+      if (!touchActive) {
+        if (g.keys['ArrowLeft'] || g.keys['a']) g.px = Math.max(1, g.px - 2);
+        else if (g.keys['ArrowRight'] || g.keys['d']) g.px = Math.min(W - 2, g.px + 2);
+      }
 
       // Fire (keyboard or auto-fire on touch)
       if ((g.keys[' '] || g.keys['j'] || g.autoFire) && g.frame % 3 === 0) {
@@ -1332,22 +1329,34 @@
       term.input.focus();
     }
 
-    // Touch controls: follow finger position for ship movement, auto-fire
-    var touchTargetX = null;
-    function getGridX(touch) {
-      var rect = term.screen.getBoundingClientRect();
-      return Math.max(1, Math.min(W - 2, Math.round((touch.clientX - rect.left) / rect.width * W)));
+    // Touch controls: delta tracking for 1:1 ship movement, auto-fire
+    var touchActive = false;
+    var prevGridX = null;
+    function getGridX(clientX) {
+      var el = term.screen;
+      var rect = el.getBoundingClientRect();
+      var cs = getComputedStyle(el);
+      var padL = parseFloat(cs.paddingLeft);
+      var contentW = rect.width - padL - parseFloat(cs.paddingRight);
+      return Math.max(1, Math.min(W - 2, Math.round((clientX - rect.left - padL) / contentW * W)));
     }
     function onTouchStart(e) {
-      touchTargetX = getGridX(e.changedTouches[0]);
+      touchActive = true;
+      prevGridX = getGridX(e.changedTouches[0].clientX);
       e.preventDefault();
     }
     function onTouchMove(e) {
-      touchTargetX = getGridX(e.changedTouches[0]);
+      var gx = getGridX(e.changedTouches[0].clientX);
+      var d = gx - prevGridX;
+      if (d !== 0) {
+        prevGridX = gx;
+        g.px = Math.max(1, Math.min(W - 2, g.px + d));
+      }
       e.preventDefault();
     }
     function onTouchEnd(e) {
-      touchTargetX = null;
+      touchActive = false;
+      prevGridX = null;
       e.preventDefault();
     }
     function addTouchHandlers() {
